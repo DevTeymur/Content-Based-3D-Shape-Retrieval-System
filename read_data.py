@@ -41,7 +41,10 @@ def show_mesh_simple(mesh):
     mesh_show_back_face=True  # show both sides of faces
     )
 
-mesh = read_data(get_random_data_from_directory())
-print(mesh)
-show_mesh_simple(mesh)
+if __name__ == "__main__":
+    for i in range(25):
+        mesh = read_data(get_random_data_from_directory())
+        print(mesh)
+        print("__"*10)
+    # show_mesh_simple(mesh)    
 
