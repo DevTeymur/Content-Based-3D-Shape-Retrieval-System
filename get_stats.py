@@ -63,6 +63,7 @@ def get_object_info(file_path, logs=False):
 
     # 5. Return all information
     return {
+        "file": file_path,
         "class": class_name,
         "num_vertices": num_vertices,
         "num_faces": num_faces,
@@ -83,7 +84,6 @@ def extract_stats(folder_path="data", logs=False):
             if file.endswith(('.obj', '.ply', '.stl')):
                 mesh_files.append(os.path.join(root, file))
 
-    # Try to use tqdm for progress bar, fallback to print
     try:
         iterator = tqdm(mesh_files, desc="Processing meshes")
     except ImportError:
