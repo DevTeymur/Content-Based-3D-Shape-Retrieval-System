@@ -16,10 +16,13 @@ def print_classname(classname):
     print()
 
 
+resampled_database_dir = Path("data") / "ShapeDatabase_resampled"
+original_database_dir = Path("data") / "ShapeDatabase_INFOMR"
+
 def resample_all(target=7500,margin=2500,logs=1):
     resample_logs = True if logs>=2 else False
 
-    for classdir in rd.get_classdirs():
+    for classdir in rd.get_classdirs(original_database_dir):
         print_classname(classdir.name)
         for obj in rd.get_objects(classdir):
             if not obj.name.endswith(".obj"): continue
@@ -40,7 +43,7 @@ def resample_all(target=7500,margin=2500,logs=1):
                 refine(obj,logs=resample_logs)
             else:
                 if logs>=1: print(f"not altering {obj.name}")
-
+                ms.save_current_mesh(str(resampled_database_dir / classdir.name / obj.name))
 
 
 def clean_mesh(ms):
@@ -53,6 +56,8 @@ def clean_mesh(ms):
     ms.apply_filter("meshing_close_holes")
 
     return ms
+
+
 
 
 def refine(mesh_path, target=5000, logs=True,save_original=False):
@@ -69,7 +74,7 @@ def refine(mesh_path, target=5000, logs=True,save_original=False):
     class_name = os.path.basename(os.path.dirname(mesh_path))
     
     # Save original mesh if not already saved
-    save_to_og = Path("ShapeDatabase_resampled") / class_name / f"{obj_name.split('.')[0]}_{n_vertices}.obj"
+    save_to_og = resampled_database_dir / class_name / f"{obj_name.split('.')[0]}_{n_vertices}.obj"
     if save_original:
         save_to_og.parent.mkdir(parents=True, exist_ok=True)
         ms.save_current_mesh(str(save_to_og))
@@ -87,18 +92,35 @@ def refine(mesh_path, target=5000, logs=True,save_original=False):
         print(f"n_v * 2^c = target = {n_vertices} * 2^{c} = {n_vertices*2**(c+1)} (target:{target})")
         print(f"c = {c}")
 
-    # quite nice
-    ms.apply_filter(
-        "meshing_isotropic_explicit_remeshing",
-        iterations=c
-    )
+    #ms.add_mesh(ms.current_mesh(), 'original_mesh_coy')
+    #ms.set_current_mesh(0)
+
+    margin = 2500
+    diminished_return = 50
+    last_n = ms.current_mesh().vertex_number()
+
+    while ms.current_mesh().vertex_number() < target:
+        # quite nice
+        ms.apply_filter(
+            "meshing_isotropic_explicit_remeshing",
+            iterations=c
+        )
+        c+=1
+
+        if logs:
+            print(f"# vertices: {ms.current_mesh().vertex_number()}  -  c={c}")
+
+        if abs(ms.current_mesh().vertex_number() - last_n) < diminished_return:
+            if logs: print("not improving anymore")
+            break
+        last_n = ms.current_mesh().vertex_number()
     
     # Extract info after refinement
     n_vertices_resampled = ms.current_mesh().vertex_number()
     new_obj_name = f"{obj_name.split('.')[0]}_{n_vertices_resampled}.obj"
     
     
-    save_to = Path("ShapeDatabase_resampled") / class_name / new_obj_name
+    save_to = resampled_database_dir / class_name / new_obj_name
     save_to.parent.mkdir(parents=True, exist_ok=True)
     
     if logs:
@@ -125,7 +147,7 @@ def simplify(mesh_path,target=10_000,percentage_value=0.1,logs=True,save_origina
     n_faces = ms.current_mesh().face_number()
     class_name = os.path.basename(os.path.dirname(mesh_path))
     # save the original file to the new location
-    save_to_og = Path("ShapeDatabase_resampled") / class_name / f"{obj_name.split('.')[0]}_{n_vertices}.obj"
+    save_to_og = resampled_database_dir / class_name / f"{obj_name.split('.')[0]}_{n_vertices}.obj"
 
     if save_original:
         save_to_og.parent.mkdir(parents=True, exist_ok=True)
@@ -165,7 +187,7 @@ def simplify(mesh_path,target=10_000,percentage_value=0.1,logs=True,save_origina
     n_faces_resampled = ms.current_mesh().face_number()
     new_obj_name = f"{obj_name.split(".")[0]}_{str(n_vertices_resampled)}.obj"
 
-    save_to = Path("ShapeDatabase_resampled") / class_name / new_obj_name
+    save_to = resampled_database_dir / class_name / new_obj_name
     save_to_string = str(save_to)
 
     if logs:
