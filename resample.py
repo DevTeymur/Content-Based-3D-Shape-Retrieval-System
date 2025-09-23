@@ -19,7 +19,7 @@ def print_classname(classname):
 resampled_database_dir = Path("data") / "ShapeDatabase_resampled"
 original_database_dir = Path("data") / "ShapeDatabase_INFOMR"
 
-def resample_all(target=7500,margin=2500,logs=1):
+def resample_all(target=6500,margin=1500,logs=1):
     resample_logs = True if logs>=2 else False
 
     for classdir in rd.get_classdirs(original_database_dir):
@@ -27,8 +27,13 @@ def resample_all(target=7500,margin=2500,logs=1):
         for obj in rd.get_objects(classdir):
             if not obj.name.endswith(".obj"): continue
             obj_string = str(obj)
+
+            save_to = resampled_database_dir / classdir.name / obj.name
+            if save_to.exists(): continue
+            
             ms = pymeshlab.MeshSet()
             ms.load_new_mesh(obj_string)
+            
 
             n_vertices = ms.current_mesh().vertex_number()
             
@@ -42,8 +47,9 @@ def resample_all(target=7500,margin=2500,logs=1):
                 if logs>=1:print(f"refining {obj.name}")
                 refine(obj,logs=resample_logs)
             else:
-                if logs>=1: print(f"not altering {obj.name}")
-                ms.save_current_mesh(str(resampled_database_dir / classdir.name / obj.name))
+                if logs>=1: print(f"not altering {obj.name}\n")
+                save_to.parent.mkdir(parents=True, exist_ok=True)
+                ms.save_current_mesh(str(save_to))
 
 
 def clean_mesh(ms):
@@ -60,7 +66,7 @@ def clean_mesh(ms):
 
 
 
-def refine(mesh_path, target=5000, logs=True,save_original=False):
+def refine(mesh_path, target=6000, percentage_value=1, logs=True,save_original=False):
     mesh_path = Path(mesh_path)
     mesh_path_string = str(mesh_path)
     ms = pymeshlab.MeshSet()
@@ -74,7 +80,7 @@ def refine(mesh_path, target=5000, logs=True,save_original=False):
     class_name = os.path.basename(os.path.dirname(mesh_path))
     
     # Save original mesh if not already saved
-    save_to_og = resampled_database_dir / class_name / f"{obj_name.split('.')[0]}_{n_vertices}.obj"
+    save_to_og = resampled_database_dir / class_name / f"{obj_name.split('.')[0]}.obj"
     if save_original:
         save_to_og.parent.mkdir(parents=True, exist_ok=True)
         ms.save_current_mesh(str(save_to_og))
@@ -86,38 +92,60 @@ def refine(mesh_path, target=5000, logs=True,save_original=False):
     
     ms = clean_mesh(ms)
 
-    c = round(math.log(target/n_vertices, 2) - 1)
+    c = round(math.log(target/n_vertices, 5))
+    c = 1
 
-    if logs:
+    if logs and c!=1:
         print(f"n_v * 2^c = target = {n_vertices} * 2^{c} = {n_vertices*2**(c+1)} (target:{target})")
         print(f"c = {c}")
 
-    #ms.add_mesh(ms.current_mesh(), 'original_mesh_coy')
-    #ms.set_current_mesh(0)
+    ms.add_mesh(ms.current_mesh(), 'original_mesh_coy')
+    ms.set_current_mesh(0)
 
-    margin = 2500
-    diminished_return = 50
-    last_n = ms.current_mesh().vertex_number()
+    margin = 1200
+    diminished_return = 5
+    last_n = 0 # ms.current_mesh().vertex_number()
 
-    while ms.current_mesh().vertex_number() < target:
+
+    percentage_value=2
+    c=3
+    d=1
+    while ms.current_mesh().vertex_number() < (target - margin) or ms.current_mesh().vertex_number() > (target + margin):
+        print("percentage_value:",percentage_value)
+        print(f"{ms.current_mesh().vertex_number()}")
         # quite nice
         ms.apply_filter(
             "meshing_isotropic_explicit_remeshing",
-            iterations=c
+            iterations=c, #c,
+            targetlen=pymeshlab.PercentageValue(percentage_value),
         )
-        c+=1
 
         if logs:
-            print(f"# vertices: {ms.current_mesh().vertex_number()}  -  c={c}")
+            print(f"# vertices: {ms.current_mesh().vertex_number()}")
 
-        if abs(ms.current_mesh().vertex_number() - last_n) < diminished_return:
-            if logs: print("not improving anymore")
-            break
+        stuck = abs(last_n - ms.current_mesh().vertex_number()) < 10
         last_n = ms.current_mesh().vertex_number()
+
+        # Iterate through okay d values
+        if last_n / target > 2:
+            percentage_value += 1
+        #elif stuck:
+            #c+=1
+        #    percentage_value += 0.5
+        elif last_n < target:
+            percentage_value -= d
+        else:
+            percentage_value += d
+        
+
+        d = max(d * 0.5, 0.2)
+
+        #percentage_value -= 0.25
+        print()
     
     # Extract info after refinement
     n_vertices_resampled = ms.current_mesh().vertex_number()
-    new_obj_name = f"{obj_name.split('.')[0]}_{n_vertices_resampled}.obj"
+    new_obj_name = f"{obj_name.split('.')[0]}.obj"
     
     
     save_to = resampled_database_dir / class_name / new_obj_name
@@ -132,7 +160,7 @@ def refine(mesh_path, target=5000, logs=True,save_original=False):
 
 
 
-def simplify(mesh_path,target=10_000,percentage_value=0.1,logs=True,save_original=False):
+def simplify(mesh_path,target=6000,percentage_value=0.1,logs=True,save_original=False):
     # make a nice path
     mesh_path = Path(mesh_path)
     mesh_path_string = str(mesh_path)
@@ -147,7 +175,7 @@ def simplify(mesh_path,target=10_000,percentage_value=0.1,logs=True,save_origina
     n_faces = ms.current_mesh().face_number()
     class_name = os.path.basename(os.path.dirname(mesh_path))
     # save the original file to the new location
-    save_to_og = resampled_database_dir / class_name / f"{obj_name.split('.')[0]}_{n_vertices}.obj"
+    save_to_og = resampled_database_dir / class_name / f"{obj_name.split('.')[0]}.obj"
 
     if save_original:
         save_to_og.parent.mkdir(parents=True, exist_ok=True)
@@ -167,7 +195,7 @@ def simplify(mesh_path,target=10_000,percentage_value=0.1,logs=True,save_origina
     # Apply a filter to the first mesh
     ms.set_current_mesh(0)
 
-    margin = 2500
+    margin = 1000
 
     while ms.current_mesh().vertex_number() > target:
         ms.apply_filter(
@@ -185,7 +213,7 @@ def simplify(mesh_path,target=10_000,percentage_value=0.1,logs=True,save_origina
     # extract info about new object
     n_vertices_resampled = ms.current_mesh().vertex_number()
     n_faces_resampled = ms.current_mesh().face_number()
-    new_obj_name = f"{obj_name.split(".")[0]}_{str(n_vertices_resampled)}.obj"
+    new_obj_name = f"{obj_name.split(".")[0]}.obj"
 
     save_to = resampled_database_dir / class_name / new_obj_name
     save_to_string = str(save_to)

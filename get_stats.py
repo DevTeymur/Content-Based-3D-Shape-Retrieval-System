@@ -97,8 +97,8 @@ def extract_stats(folder_path="data", logs=False):
 
 
 if __name__ == "__main__":
-    all_data = extract_stats("data/ShapeDatabase_INFOMR",logs=False)
+    all_data = extract_stats("data/ShapeDatabase_resampled",logs=False)
     df = pd.DataFrame(all_data)
     print(df.head())
-    df.to_csv("stats.csv", index=False)
+    df.to_csv("stats_resampledcsv", index=False)
     
