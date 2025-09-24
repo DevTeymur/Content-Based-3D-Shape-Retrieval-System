@@ -8,7 +8,7 @@ filterwarnings("ignore")
 
 from get_stats import extract_stats
 
-# 1. Translate mesh to origin
+# Step 2.5 -Translate mesh to origin
 def translate_mesh(mesh):
     """
     Translate mesh so its barycenter coincides with the origin.
@@ -18,7 +18,7 @@ def translate_mesh(mesh):
     mesh.translate(-barycenter)
     return mesh
 
-# 2. Scale mesh to fit unit cube
+# Step 2.5 - Scale mesh to fit unit cube
 def scale_mesh(mesh, target_size=1.0):
     """
     Scale mesh uniformly so it fits into a unit cube (or target_size cube).
@@ -31,7 +31,7 @@ def scale_mesh(mesh, target_size=1.0):
         mesh.scale(scale_factor, center=(0,0,0))
     return mesh
 
-# 3. Save normalized mesh
+# Step 2.5 - Save normalized mesh
 def save_normalized_mesh(mesh, original_path, output_dir):
     """
     Save normalized mesh to output directory, keeping folder structure.
@@ -42,7 +42,7 @@ def save_normalized_mesh(mesh, original_path, output_dir):
     o3d.io.write_triangle_mesh(str(output_path), mesh)
     return output_path
 
-# 4. Normalize all meshes in database
+# Step 2.5 - Normalize all meshes in database
 def normalize_database(input_dir, output_dir):
     input_dir = Path(input_dir)
     output_dir = Path(output_dir)
@@ -59,13 +59,17 @@ def normalize_database(input_dir, output_dir):
         # break
 
 
-
 if __name__ == "__main__":
-    input_database = "resampled_data"  # original/resampled database
-    output_database = "normalized_data"  # where normalized meshes will be saved
-    normalize_database(input_database, output_database)
-    print("Normalization complete.")
-
-    all_data = extract_stats(folder_path=output_database, logs=False)
-    df = pd.DataFrame(all_data)
-    df.to_csv("normalized_stats.csv", index=False)
+    mode = 'stats'  # 'normalize' or 'stats'
+    if mode == 'normalize':
+        input_database = "resampled_data"  # original/resampled database
+        output_database = "normalized_data"  # where normalized meshes will be saved
+        normalize_database(input_database, output_database)
+        print("Normalization complete.")
+        all_data = extract_stats(folder_path=output_database, logs=False)
+        df = pd.DataFrame(all_data)
+        df.to_csv("normalized_stats.csv", index=False)
+    elif mode == 'stats':
+        from get_stats import plot_histograms
+        df = pd.read_csv("stats/normalized_stats.csv")
+        plot_histograms(df)
