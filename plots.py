@@ -1,5 +1,5 @@
 import open3d as o3d
-
+import numpy as np
 
 def show_mesh_simple(mesh):
     o3d.visualization.draw_geometries(
@@ -51,6 +51,37 @@ def visualize_normalized_shape(mesh_path, show_plot=True, axes_size=0.5, show_bb
 
     # Return geometries for optional further processing
     return geometries
+
+
+def avg_shape_plot(df, avg_vertices, avg_faces):
+    # === 5. Average shape + outliers visualization ===
+    # Find the shape closest to the average
+    df["dist_to_avg"] = np.sqrt(
+        (df["num_vertices"] - avg_vertices)**2 +
+        (df["num_faces"] - avg_faces)**2
+    )
+    avg_shape_row = df.loc[df["dist_to_avg"].idxmin()]
+    avg_shape_path = avg_shape_row["file"]  # assuming "path" column in CSV
+
+    # Load and visualize with Open3D
+    mesh_avg = o3d.io.read_triangle_mesh(avg_shape_path)
+    mesh_avg.compute_vertex_normals()
+    print("Showing average shape...")
+    o3d.visualization.draw_geometries([mesh_avg])
+
+
+def plot_outlier_shapes(df):
+    # Outlier with fewest vertices
+    min_shape = df.loc[df["num_vertices"].idxmin()]
+
+    # Outlier with most vertices
+    max_shape = df.loc[df["num_vertices"].idxmax()]
+
+    for shape in [min_shape, max_shape]:
+        mesh_out = o3d.io.read_triangle_mesh(shape["file"])
+        mesh_out.compute_vertex_normals()
+        print(f"Showing outlier: {shape['file']}")
+        o3d.visualization.draw_geometries([mesh_out])
 
 
 # Class not working for now

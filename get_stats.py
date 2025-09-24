@@ -3,10 +3,10 @@ from read_data import read_data
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 
 def get_object_info(file_path, logs=False):
-
     # 1. Reading file
     mesh = read_data(file_path)
 
@@ -94,6 +94,51 @@ def extract_stats(folder_path="data", logs=False):
         stats = get_object_info(file_path, logs=logs)
         all_stats.append(stats)
     return all_stats
+
+
+def compute_averages(df):
+    # === 2. Compute averages ===
+    avg_vertices = df["num_vertices"].mean()
+    avg_faces = df["num_faces"].mean()
+    print(f"Average vertices: {avg_vertices:.2f}")
+    print(f"Average faces: {avg_faces:.2f}")
+    return avg_vertices, avg_faces
+
+
+def detect_outliers(df, avg_vertices, avg_faces):
+    std_vertices = df["num_vertices"].std()
+    std_faces = df["num_faces"].std()
+
+    outliers = df[
+        (np.abs(df["num_vertices"] - avg_vertices) > 2*std_vertices) |
+        (np.abs(df["num_faces"] - avg_faces) > 2*std_faces)
+    ]
+    print("Outliers:")
+    print(outliers)
+    return outliers
+
+
+def plot_histograms(df):
+    plt.figure()
+    df["num_vertices"].hist(bins=30)
+    plt.xlabel("Number of vertices")
+    plt.ylabel("Number of shapes")
+    plt.title("Histogram of vertices")
+    plt.show()
+
+    plt.figure()
+    df["num_faces"].hist(bins=30)
+    plt.xlabel("Number of faces")
+    plt.ylabel("Number of shapes")
+    plt.title("Histogram of faces")
+    plt.show()
+
+    plt.figure(figsize=(12,6))
+    df["class"].value_counts().plot(kind="bar")
+    plt.xlabel("Shape class")
+    plt.ylabel("Count")
+    plt.title("Class distribution")
+    plt.show()
 
 
 if __name__ == "__main__":
