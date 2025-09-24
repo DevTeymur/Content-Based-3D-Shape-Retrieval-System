@@ -1,7 +1,11 @@
-import open3d as o3d
 import os
 import random
+import pandas as pd
+import open3d as o3d
 from pathlib import Path
+import matplotlib.pyplot as plt
+
+from plots import show_mesh_simple
 
 DIR_NAME="data"
 
@@ -73,15 +77,18 @@ def read_data(file_path):
     else:
         raise ValueError("Unsupported file format. Please provide a .obj, .ply, or .stl file.")
 
+def read_stats(stats_path="stats",files=["original_stats.csv","resampled_stats.csv"]):
+    stats_path = Path(stats_path)
+    for f in files:
+        f = Path(f)
+        df = pd.read_csv(stats_path / f)
+        s = df['num_vertices']
 
-def show_mesh_simple(mesh):
-    o3d.visualization.draw_geometries(
-    [mesh],
-    window_name="3D Shape Viewer",
-    width=1500,
-    height=1500,
-    mesh_show_back_face=True  # show both sides of faces
-    )
+        s.plot(kind="hist", bins=100, edgecolor="black")
+        plt.savefig(stats_path / f"histogram_{f.name}.png", dpi=300, bbox_inches="tight")
+
+        plt.clf()
+
 
 if __name__ == "__main__":
     # for i in range(25):
