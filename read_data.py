@@ -7,20 +7,22 @@ import matplotlib.pyplot as plt
 
 from plots import show_mesh_simple
 
-DIR_NAME="data"
+DIR_NAME = "data"
+RESAMPLED_DIR_NAME = "resampled_data"
+NORMALIZED_DIR_NAME = "normalized_data"
 
-def get_classdirs(directory_name=DIR_NAME,logs=True):
+# Step 1
+def get_classdirs(directory_name=DIR_NAME):
     directory_name = Path(directory_name)
     classes = [(directory_name / f) for f in os.listdir(directory_name) if (directory_name / f).is_dir()]
-
     return classes
 
+# Step 1
 def get_objects(classdir):
     filenames = [(classdir / f) for f in os.listdir(classdir) if f.endswith(('.obj', '.ply', '.stl'))] 
-
     return filenames
 
-
+# Step 2.3 and 2.4
 def get_resampled_filenames(object_path):
     resampled_dir = "data_resampled"
     object_path = Path(object_path)
@@ -28,6 +30,7 @@ def get_resampled_filenames(object_path):
 
     return filenames
 
+# Step 1
 def get_data_from_directory(directory_name=None, logs=True):
     if directory_name is None:
         # Pick a random folder from data/
@@ -48,7 +51,7 @@ def get_data_from_directory(directory_name=None, logs=True):
     
     return os.path.join(directory_name, random.choice(files))
 
-
+# Step 1
 def get_random_data_from_directory(directory_name=None, logs=True):
     if directory_name is None:
         # Pick a random folder from data/
@@ -69,7 +72,7 @@ def get_random_data_from_directory(directory_name=None, logs=True):
     
     return os.path.join(directory_name, random.choice(files))
 
-
+# Step 1
 def read_data(file_path):
     if file_path.endswith('.obj') or file_path.endswith('.ply') or file_path.endswith('.stl'):
         mesh = o3d.io.read_triangle_mesh(file_path).compute_vertex_normals()
@@ -77,6 +80,7 @@ def read_data(file_path):
     else:
         raise ValueError("Unsupported file format. Please provide a .obj, .ply, or .stl file.")
 
+# Step 2.2
 def read_stats(stats_path="stats",files=["original_stats.csv","resampled_stats.csv"]):
     stats_path = Path(stats_path)
     for f in files:
@@ -86,7 +90,6 @@ def read_stats(stats_path="stats",files=["original_stats.csv","resampled_stats.c
 
         s.plot(kind="hist", bins=100, edgecolor="black")
         plt.savefig(stats_path / f"histogram_{f.name}.png", dpi=300, bbox_inches="tight")
-
         plt.clf()
 
 

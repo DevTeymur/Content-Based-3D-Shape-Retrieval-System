@@ -6,6 +6,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 
+# Step 2.1
 def get_object_info(file_path, logs=False):
     # 1. Reading file
     mesh = read_data(file_path)
@@ -74,7 +75,7 @@ def get_object_info(file_path, logs=False):
         }
     }
 
-
+# Step 2.1
 def extract_stats(folder_path="data", logs=False):
     all_stats = []
     mesh_files = []
@@ -95,16 +96,15 @@ def extract_stats(folder_path="data", logs=False):
         all_stats.append(stats)
     return all_stats
 
-
+# Step 2.2
 def compute_averages(df):
-    # === 2. Compute averages ===
     avg_vertices = df["num_vertices"].mean()
     avg_faces = df["num_faces"].mean()
     print(f"Average vertices: {avg_vertices:.2f}")
     print(f"Average faces: {avg_faces:.2f}")
     return avg_vertices, avg_faces
 
-
+# Step 2.2
 def detect_outliers(df, avg_vertices, avg_faces):
     std_vertices = df["num_vertices"].std()
     std_faces = df["num_faces"].std()
@@ -117,7 +117,7 @@ def detect_outliers(df, avg_vertices, avg_faces):
     print(outliers)
     return outliers
 
-
+# Step 2.2
 def plot_histograms(df):
     plt.figure()
     df["num_vertices"].hist(bins=30)

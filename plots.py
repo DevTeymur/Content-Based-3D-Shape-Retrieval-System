@@ -1,6 +1,7 @@
 import open3d as o3d
 import numpy as np
 
+# Step 1
 def show_mesh_simple(mesh):
     o3d.visualization.draw_geometries(
     [mesh],
@@ -10,7 +11,7 @@ def show_mesh_simple(mesh):
     mesh_show_back_face=True  # show both sides of faces
     )
 
-
+# Step 2.5
 def visualize_normalized_shape(mesh_path, show_plot=True, axes_size=0.5, show_bbox=True):
     """
     Visualize a normalized 3D shape with optional coordinate axes and bounding box.
@@ -53,6 +54,7 @@ def visualize_normalized_shape(mesh_path, show_plot=True, axes_size=0.5, show_bb
     return geometries
 
 
+# Step 2.2
 def avg_shape_plot(df, avg_vertices, avg_faces):
     # === 5. Average shape + outliers visualization ===
     # Find the shape closest to the average
@@ -69,7 +71,7 @@ def avg_shape_plot(df, avg_vertices, avg_faces):
     print("Showing average shape...")
     o3d.visualization.draw_geometries([mesh_avg])
 
-
+# Step 2.2
 def plot_outlier_shapes(df):
     # Outlier with fewest vertices
     min_shape = df.loc[df["num_vertices"].idxmin()]

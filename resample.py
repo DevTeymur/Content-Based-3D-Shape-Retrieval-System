@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 import math
 
+# Step 2.3 and 2.4
 def print_classname(classname):
     classname = str(classname)
     width=50
