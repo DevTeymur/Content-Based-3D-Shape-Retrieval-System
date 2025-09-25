@@ -105,7 +105,7 @@ def compute_averages(df):
     return avg_vertices, avg_faces
 
 # Step 2.2
-def detect_outliers(df, avg_vertices, avg_faces):
+def detect_outliers(df, avg_vertices, avg_faces, logs=0):
     std_vertices = df["num_vertices"].std()
     std_faces = df["num_faces"].std()
 
@@ -113,8 +113,8 @@ def detect_outliers(df, avg_vertices, avg_faces):
         (np.abs(df["num_vertices"] - avg_vertices) > 2*std_vertices) |
         (np.abs(df["num_faces"] - avg_faces) > 2*std_faces)
     ]
-    print("Outliers:")
-    print(outliers)
+    print("Outliers:") if logs else None
+    print(outliers) if logs else None
     return outliers
 
 # Step 2.2
