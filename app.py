@@ -1,4 +1,4 @@
-from plots import show_mesh_simple
+from plots import show_mesh_simple, plot_histograms
 from read_data import read_data
 
 import numpy as np
@@ -6,8 +6,8 @@ import open3d as o3d
 import pandas as pd
 
 logs = 0  # 0: no logs, 1: some logs, 2: detailed logs
-step = 2
-display = False  # Whether to display meshes or not
+step = 1
+display = True  # Whether to display meshes or not
 
 # Step 1
 if step == 1:
@@ -17,8 +17,10 @@ if step == 1:
     # Example 2 
     # mesh = read_data('resampled_data/Hand/D01172_9178.obj')
     # Example 3 - Random
-    mesh = read_data(get_random_data_from_directory())
-    show_mesh_simple(mesh) if display else None 
+    mesh = read_data("/Users/tima/Documents/DASC/Multimedia Retreival/Multimedia-Retrieval/normalized_data/Bed/D00031_8609.obj")
+    # show_mesh_simple(mesh) if display else None 
+    from plots import visualize_normalized_shape
+    visualize_normalized_shape(get_random_data_from_directory(parent_directory="normalized_data"), axes_size=.5)
 
 
 # Step 2
@@ -40,7 +42,7 @@ elif step == 2:
     print("done")
 
     # Step 2.2
-    from get_stats import compute_averages, detect_outliers, plot_histograms
+    from get_stats import compute_averages, detect_outliers
     print("Computing averages for original...", end=" ")
     avg_vertices, avg_faces = compute_averages(df)
     print("done")
@@ -70,19 +72,19 @@ elif step == 2:
         show_mesh_simple(read_data(shape["file"])) if display else None
 
     print("Plotting histograms...", end=" ")
-    plot_histograms(df) if display else None
+    plot_histograms(df, step='2_2') if display else None
     print("done")
 
     # Step 2.3
     resample_meshes = False
     if resample_meshes:
-        from resample import resample_all
+        from new_resample import resample_all
         print("Resampling meshes...")
-        resample_all(target=7500, margin=2500, logs=logs)
+        resample_all(database_dir="data", target=7000, margin=2000, logs=logs)
         print("done")
     
     # Step 2.4
-    process_resampled_meshes = True
+    process_resampled_meshes = False
     if process_resampled_meshes:
         print("Extracting stats from resampled meshes...", end=" ")
         all_data = extract_stats(folder_path="resampled_data", logs=False) 
@@ -103,7 +105,7 @@ elif step == 2:
 
     # Histograms after resampling
     print("Plotting histograms...", end=" ")
-    plot_histograms(resampled_df) if display else None
+    plot_histograms(resampled_df, step='2_4') 
     print("done")
 
     # Step 2.5
@@ -112,7 +114,7 @@ elif step == 2:
         from normalize import normalize_database
         input_database = "resampled_data"  # original/resampled database
         output_database = "normalized_data"  # where normalized meshes will be saved
-        normalize_database(input_database, output_database)
+        normalize_database(input_database, output_database, logs=logs)
         print("Normalization complete.")
 
     process_normalized_meshes = False
@@ -134,7 +136,4 @@ elif step == 2:
     print("done")
     print(f"Averages - Vertices: {avg_vertices:.0f}, Faces: {avg_faces:.0f}")
 
-    plot_histograms(normalized_df) if display else None
-
-
-
+    plot_histograms(normalized_df, step='2_5') 

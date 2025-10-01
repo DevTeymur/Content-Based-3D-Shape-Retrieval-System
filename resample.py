@@ -74,72 +74,75 @@ def clean_mesh(ms):
     return ms
 
 
-def refine(mesh_path, target=5000, logs=1, save_original=False):
+def refine(mesh_path, target=7500, margin=1000, logs=1, save_original=False):
     mesh_path = Path(mesh_path)
-    mesh_path_string = str(mesh_path)
     ms = pymeshlab.MeshSet()
-    
-    # Load the mesh
-    ms.load_new_mesh(mesh_path_string)
-    
-    # Extract information
+    ms.load_new_mesh(str(mesh_path))
+
     obj_name = mesh_path.name
-    n_vertices = ms.current_mesh().vertex_number()
     class_name = os.path.basename(os.path.dirname(mesh_path))
-    
-    # Save original mesh if not already saved
-    save_to_og = resampled_database_dir / class_name / f"{obj_name.split('.')[0]}_{n_vertices}.obj"
+    n_vertices = ms.current_mesh().vertex_number()
+
+    # Save original mesh if requested
     if save_original:
+        save_to_og = resampled_database_dir / class_name / f"{obj_name.split('.')[0]}_{n_vertices}.obj"
         save_to_og.parent.mkdir(parents=True, exist_ok=True)
         ms.save_current_mesh(str(save_to_og))
-    
+
     if logs >= 1:
         print(f"[INFO] Loaded: {mesh_path} (class={class_name})")
         print(f"[INFO] Old #vertices: {n_vertices}")
-    
+
     ms = clean_mesh(ms)
 
-    c = round(math.log(target/n_vertices, 2) - 1)
+    # Initial iteration factor, roughly proportional to log2(target/current)
+    c = max(1, round(math.log(target/n_vertices, 2) - 1))
 
-    if logs >= 2:
-        print(f"    Formula check: n_v * 2^c = {n_vertices} * 2^{c} = {n_vertices*2**(c+1)} (target:{target})")
-        print(f"    Initial c = {c}")
-
-    margin = 2500
     diminished_return = 50
-    last_n = ms.current_mesh().vertex_number()
+    last_n = n_vertices
 
     while ms.current_mesh().vertex_number() < target:
-        ms.apply_filter(
-            "meshing_isotropic_explicit_remeshing",
-            iterations=c
-        )
-        c += 1
-
+        current_vertices = ms.current_mesh().vertex_number()
+        # Adaptive iterations: smaller meshes use fewer iterations
+        factor = max(1, int((target - current_vertices) / 1000))
+        ms.apply_filter("meshing_isotropic_explicit_remeshing", iterations=factor)
+        
         if logs >= 2:
-            print(f"    Iter step: #vertices={ms.current_mesh().vertex_number()}  -  c={c}")
+            print(f"    Iter step: #vertices={ms.current_mesh().vertex_number()} - iterations={factor}")
 
+        # Stop if increase is too small
         if abs(ms.current_mesh().vertex_number() - last_n) < diminished_return:
             if logs >= 1:
                 print("[INFO] Refinement stopped: not improving anymore")
             break
+
         last_n = ms.current_mesh().vertex_number()
-    
-    # Extract info after refinement
+
+        # Stop if we exceed target + margin
+        if last_n >= target + margin:
+            if logs >= 1:
+                print("[INFO] Refinement stopped: reached target + margin")
+            break
+
+    # Save result
     n_vertices_resampled = ms.current_mesh().vertex_number()
     new_obj_name = f"{obj_name.split('.')[0]}_{n_vertices_resampled}.obj"
-    
     save_to = resampled_database_dir / class_name / new_obj_name
     save_to.parent.mkdir(parents=True, exist_ok=True)
+    ms.save_current_mesh(str(save_to))
 
     if logs >= 1:
         print(f"[INFO] Saving to: {save_to}")
         print(f"[INFO] New #vertices: {n_vertices_resampled}")
-    
-    ms.save_current_mesh(str(save_to))
+        print("-" * 40)
 
-    if logs >= 1:
-        print("-" * 40)  # separator between meshes
+    return {
+        "file": str(save_to),
+        "class": class_name,
+        "old_vertices": n_vertices,
+        "new_vertices": n_vertices_resampled
+    }
+
 
 
 def simplify(mesh_path, target=10_000, percentage_value=0.1, logs=1, save_original=False):
@@ -180,10 +183,14 @@ def simplify(mesh_path, target=10_000, percentage_value=0.1, logs=1, save_origin
             "meshing_decimation_clustering",
             threshold=pymeshlab.PercentageValue(percentage_value)
         )
-        percentage_value += 0.1
-
+        new_n = ms.current_mesh().vertex_number()
         if logs >= 2:
-            print(f"    Iter step: #vertices={ms.current_mesh().vertex_number()}")
+            print(f"    Iter step: #vertices={new_n}")
+
+        if new_n <= target:
+            break  # Stop if we reach target
+
+        percentage_value = min(percentage_value + 0.05, 0.9)  # prevent too high
 
     # Extract info about new object
     n_vertices_resampled = ms.current_mesh().vertex_number()
@@ -211,5 +218,33 @@ def simplify(mesh_path, target=10_000, percentage_value=0.1, logs=1, save_origin
     }
 
 
-if __name__=="__main__":
-    resample_all()
+def resample_one(file_path, target=7500, margin=2500, logs=1):
+    ms = pymeshlab.MeshSet()
+    ms.load_new_mesh(str(file_path))
+    n_vertices = ms.current_mesh().vertex_number()
+    n_gap = n_vertices - target
+
+    if logs >= 2:
+        print(f"# vertices: {n_vertices}. ", end="")
+    if n_gap > margin:
+        if logs >= 2: print(f"simplifying {Path(file_path).name}")
+        return simplify(file_path, logs=logs)
+    elif n_gap < (-margin):
+        if logs >= 2: print(f"refining {Path(file_path).name}")
+        return refine(file_path, logs=logs)
+    else:
+        if logs >= 2: print(f"not altering {Path(file_path).name}")
+        class_name = os.path.basename(os.path.dirname(file_path))
+        save_path = resampled_database_dir / class_name / Path(file_path).name
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        ms.save_current_mesh(str(save_path))
+        return {"file": str(save_path), "class": class_name, "old_vertices": n_vertices, "new_vertices": n_vertices, "old_faces": ms.current_mesh().face_number(), "new_faces": ms.current_mesh().face_number()}
+
+
+if __name__ == "__main__":
+    from read_data import get_random_data_from_directory
+    result = resample_one(get_random_data_from_directory())
+    # from get_stats import get_object_info
+
+    # resampled_file = result["file"]
+    # print(get_object_info(resampled_file))

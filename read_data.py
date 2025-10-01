@@ -52,13 +52,13 @@ def get_data_from_directory(directory_name=None, logs=True):
     return os.path.join(directory_name, random.choice(files))
 
 # Step 1
-def get_random_data_from_directory(directory_name=None, logs=True):
+def get_random_data_from_directory(directory_name=None, parent_directory="data", logs=True):
     if directory_name is None:
         # Pick a random folder from data/
         directory_name = random.choice([
-            os.path.join("data", d)
-            for d in os.listdir("data")
-            if os.path.isdir(os.path.join("data", d))
+            os.path.join(parent_directory, d)
+            for d in os.listdir(parent_directory)
+            if os.path.isdir(os.path.join(parent_directory, d))
         ])
         print(f"Selected random directory: {directory_name}") if logs else None
     

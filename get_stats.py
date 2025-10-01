@@ -117,28 +117,22 @@ def detect_outliers(df, avg_vertices, avg_faces, logs=0):
     print(outliers) if logs else None
     return outliers
 
+
 # Step 2.2
-def plot_histograms(df):
-    plt.figure()
-    df["num_vertices"].hist(bins=30)
-    plt.xlabel("Number of vertices")
-    plt.ylabel("Number of shapes")
-    plt.title("Histogram of vertices")
-    plt.show()
+def calculate_avg_without_outliers(df, column="num_vertices"):
+    Q1 = df[column].quantile(0.25)
+    Q3 = df[column].quantile(0.75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
 
-    plt.figure()
-    df["num_faces"].hist(bins=30)
-    plt.xlabel("Number of faces")
-    plt.ylabel("Number of shapes")
-    plt.title("Histogram of faces")
-    plt.show()
+    filtered_df = df[(df[column] >= lower_bound) & (df[column] <= upper_bound)]
+    avg_vertices_no_outliers = filtered_df["vertices"].mean()
+    avg_faces_no_outliers = filtered_df["faces"].mean()
+    print(f"Average vertices without outliers: {avg_vertices_no_outliers:.0f}")
+    print(f"Average faces without outliers: {avg_faces_no_outliers:.0f}")
+    return avg_vertices_no_outliers, avg_faces_no_outliers
 
-    plt.figure(figsize=(12,6))
-    df["class"].value_counts().plot(kind="bar")
-    plt.xlabel("Shape class")
-    plt.ylabel("Count")
-    plt.title("Class distribution")
-    plt.show()
 
 
 if __name__ == "__main__":

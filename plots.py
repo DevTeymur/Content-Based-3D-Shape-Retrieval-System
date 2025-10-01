@@ -1,5 +1,7 @@
 import open3d as o3d
 import numpy as np
+import pandas as pd
+from matplotlib import pyplot as plt
 
 # Step 1
 def show_mesh_simple(mesh):
@@ -85,6 +87,40 @@ def plot_outlier_shapes(df):
         print(f"Showing outlier: {shape['file']}")
         o3d.visualization.draw_geometries([mesh_out])
 
+# Step 2.2
+def plot_boxplots(df):
+    df[["vertices", "faces"]].plot(kind="box", subplots=True, layout=(1,2), figsize=(10,5))
+    plt.suptitle("Boxplots with Outliers")
+    plt.show()
+
+# Step 2.2
+def plot_histograms(df, step="2"):
+    plt.figure()
+    df["num_vertices"].hist(bins=30)
+    plt.xlabel("Number of vertices")
+    plt.ylabel("Number of shapes")
+    plt.title("Histogram of vertices")
+    plt.savefig(f"img/hist_vertices_step_{step}.png")
+    plt.show()
+
+    plt.figure()
+    df["num_faces"].hist(bins=30)
+    plt.xlabel("Number of faces")
+    plt.ylabel("Number of shapes")
+    plt.title("Histogram of faces")
+    plt.savefig(f"img/hist_faces_step_{step}.png")
+    plt.show()
+
+    if False:
+        plt.figure(figsize=(12,6))
+        df["class"].value_counts().plot(kind="bar")
+        plt.xlabel("Shape class")
+        plt.ylabel("Count")
+        plt.title("Class distribution")
+        plt.savefig(f"img/class_distribution_step_{step}.png")
+        plt.show()
+
+
 
 # Class not working for now
 import open3d as o3d
@@ -149,6 +185,12 @@ class NormalizedShapeViewer:
 
 
 if __name__=="__main__":
-    visualize_normalized_shape("normalized_data/Insect/D00291_5256.obj", axes_size=.5)
-   
+    # visualize_normalized_shape("normalized_data/Insect/D00291_5256.obj", axes_size=.5)
+    df = pd.read_csv("stats/original_stats.csv")
+    df = df.drop(columns=["file"])
+    df = df.rename(columns={"num_vertices": "vertices", "num_faces": "faces"})
+    df = df[["vertices", "faces"]]
+    df = df.astype(float)
+    plot_boxplots(df)
+
 
