@@ -9,8 +9,8 @@ logs = 0  # 0: no logs, 1: some logs, 2: detailed logs
 step = 1
 display = True  # Whether to display meshes or not
 
-# Step 1
-if step == 1:
+
+def step1(logs=0, display=True):
     from read_data import get_random_data_from_directory
     # Example 1
     # mesh = read_data('resampled_data/Car/m1518.obj')
@@ -22,9 +22,7 @@ if step == 1:
     from plots import visualize_normalized_shape
     visualize_normalized_shape(get_random_data_from_directory(parent_directory="normalized_data"), axes_size=.5)
 
-
-# Step 2
-elif step == 2:
+def step2(logs=0, display=True):
     # Step 2.1
     from get_stats import extract_stats
     process_meshes = False
@@ -137,3 +135,28 @@ elif step == 2:
     print(f"Averages - Vertices: {avg_vertices:.0f}, Faces: {avg_faces:.0f}")
 
     plot_histograms(normalized_df, step='2_5') 
+
+    
+# Step A. Normalization pipeline (mesh centering + scaling + resampling).
+# Step B. Core feature functions (diameter, convexity, eccentricity, etc.).
+# Step C. Histogram-based local features (A3, D1–D4).
+# Step D. Standardization helpers.
+# Step E. Single-mesh feature integration.
+# Step F. Database-wide feature extraction (CSV export).
+# Step G. Query + distance computation + retrieval.
+# Step H. Final integration in app.py.
+def step3(logs=0, display=True):
+    pass
+
+
+    from read_data import get_random_data_from_directory
+    # Example 1
+    # mesh = read_data('resampled_data/Car/m1518.obj')
+    # Example 2 
+    # mesh = read_data('resampled_data/Hand/D01172_9178.obj')
+    # Example 3 - Random
+    mesh = read_data("/Users/tima/Documents/DASC/Multimedia Retreival/Multimedia-Retrieval/normalized_data/Bed/D00031_8609.obj")
+    # show_mesh_simple(mesh) if display else None 
+    from plots import visualize_normalized_shape
+    visualize_normalized_shape(get_random_data_from_directory(parent_directory="normalized_data"), axes_size=.5)
+

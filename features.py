@@ -1,6 +1,8 @@
 import numpy as np
 import trimesh
 import random
+import math
+from collections import defaultdict
 
 def compute_surface_area(mesh):
     return mesh.area
@@ -65,8 +67,192 @@ def extract_scalar_features(mesh):
     return features
 
 
+# Histogram configuration
+SAMPLE_N = 2000
+BINS = 10
+RANDOM_SEED = 42
+random.seed(RANDOM_SEED)
+
+# Ranges for normalization of histogram features
+HIST_RANGES = {
+    'A3': (0, math.pi),
+    'D1': (0, 1.0),
+    'D2': (0, 1.4),
+    'D3': (0, 0.7),
+    'D4': (0, 0.5)
+}
+
+def histogram(values, bins=BINS, value_range=(0,1)):
+    """
+    Compute normalized histogram vector for a list of values.
+    """
+    hist, _ = np.histogram(values, bins=bins, range=value_range)
+    hist = hist / np.sum(hist)  # normalize to sum=1
+    return hist
+
+def compute_a3(mesh):
+    """Angles between 3 random vertices."""
+    vertices = list(mesh.vertices)
+    angles = []
+    for _ in range(SAMPLE_N):
+        a, b, c = random.sample(vertices, 3)
+        ab = b - a
+        ac = c - a
+        cos_angle = np.dot(ab, ac) / (np.linalg.norm(ab) * np.linalg.norm(ac))
+        cos_angle = np.clip(cos_angle, -1, 1)  # avoid numerical errors
+        angles.append(math.acos(cos_angle))
+    return histogram(angles, bins=BINS, value_range=HIST_RANGES['A3'])
+
+def compute_d1(mesh):
+    """Distance from barycenter to random vertex."""
+    vertices = list(mesh.vertices)
+    center = mesh.centroid
+    distances = [np.linalg.norm(random.choice(vertices) - center) for _ in range(SAMPLE_N)]
+    return histogram(distances, bins=BINS, value_range=HIST_RANGES['D1'])
+
+def compute_d2(mesh):
+    """Distance between 2 random vertices."""
+    vertices = list(mesh.vertices)
+    distances = [np.linalg.norm(random.sample(vertices, 2)[1] - random.sample(vertices, 2)[0]) for _ in range(SAMPLE_N)]
+    return histogram(distances, bins=BINS, value_range=HIST_RANGES['D2'])
+
+def compute_d3(mesh):
+    """Square root of triangle area from 3 random vertices."""
+    vertices = list(mesh.vertices)
+    sqr_areas = []
+    for _ in range(SAMPLE_N):
+        p1, p2, p3 = random.sample(vertices, 3)
+        a = p2 - p1
+        b = p3 - p1
+        cross_prod = np.cross(a, b)
+        area = 0.5 * np.linalg.norm(cross_prod)
+        sqr_areas.append(math.sqrt(area))
+    return histogram(sqr_areas, bins=BINS, value_range=HIST_RANGES['D3'])
+
+def compute_d4(mesh):
+    """Cube root of tetrahedron volume from 4 random vertices."""
+    vertices = list(mesh.vertices)
+    volumes = []
+    for _ in range(SAMPLE_N):
+        p1, p2, p3, p4 = random.sample(vertices, 4)
+        mat = np.stack([p1-p4, p2-p4, p3-p4], axis=1)
+        vol = abs(np.linalg.det(mat)) / 6
+        volumes.append(vol ** (1/3))
+    return histogram(volumes, bins=BINS, value_range=HIST_RANGES['D4'])
+
+def extract_histogram_features(mesh):
+    """
+    Returns a dictionary with histogram vectors for all local descriptors.
+    Keys: A3_0..9, D1_0..9, D2_0..9, D3_0..9, D4_0..9
+    """
+    features = {}
+    features['A3'] = compute_a3(mesh)
+    features['D1'] = compute_d1(mesh)
+    features['D2'] = compute_d2(mesh)
+    features['D3'] = compute_d3(mesh)
+    features['D4'] = compute_d4(mesh)
+    
+    # flatten into BINS-length keys
+    flat_features = {}
+    for key, vec in features.items():
+        for i, val in enumerate(vec):
+            flat_features[f"{key}_{i}"] = val
+    return flat_features
+
+def standardize_single_value(value, mean, std):
+    """
+    Standardizes a single value:
+    Centers at 0.5, scales so most values fall in [0,1].
+    """
+    return 0.5 + (value - mean) / (7 * std)
+
+def standardize_column(column, mean=None, std=None):
+    """
+    Standardizes a list/array of values.
+    If mean/std not provided, compute from column.
+    Returns standardized column, mean, std.
+    """
+    if mean is None or std is None:
+        mean = np.mean(column)
+        std = np.std(column)
+
+    standardized = [standardize_single_value(v, mean, std) for v in column]
+    return standardized, mean, std
+
+def standardize_features_db(features_df, columns_to_standardize):
+    """
+    Standardizes selected scalar columns of a dataframe.
+    Returns new dataframe and a dict of standardization params.
+    """
+    std_params = {}
+    for col in columns_to_standardize:
+        features_df[col], mean, std = standardize_column(features_df[col])
+        std_params[col] = {"mean": mean, "std": std}
+    return features_df, std_params
+
+
+
+import os
+import pandas as pd
+from collections import defaultdict
+import trimesh
+# from features_helpers import extract_scalar_features_single_mesh, extract_hist_features_single_mesh, BINS, hist_feature_methods
+
+# def extract_features_db(root_dir='normalized_data', to_csv=True, output_csv='stats/features.csv'):
+#     """
+#     Extracts scalar + histogram features for all meshes in the normalized DB.
+#     Returns a DataFrame with one row per mesh.
+#     """
+#     feature_dict = defaultdict(list)
+
+#     for category in os.listdir(root_dir):
+#         if category.startswith('.'):  # skip hidden/system files
+#             continue
+
+#         category_path = os.path.join(root_dir, category)
+#         for mesh_file in os.listdir(category_path):
+#             if mesh_file.startswith('.'):
+#                 continue
+
+#             mesh_path = os.path.join(category_path, mesh_file)
+#             mesh = trimesh.load(mesh_path)
+
+#             # Basic info
+#             feature_dict['filename'].append(mesh_file)
+#             feature_dict['category'].append(category)
+#             feature_dict['path'].append(mesh_path)
+
+#             # Scalar features
+#             scalar_feats = extract_scalar_features_single_mesh(mesh)
+#             for key, value in scalar_feats.items():
+#                 feature_dict[key].append(value)
+
+#             # Histogram features
+#             hist_feats = extract_hist_features_single_mesh(mesh, returntype='dictionary')
+#             for feat_name, bins_values in hist_feats.items():
+#                 for i, bin_val in enumerate(bins_values):
+#                     feature_dict[f"{feat_name}_{i}"].append(bin_val)
+
+#             print(f"Extracted features: {mesh_file}")
+
+    # Convert to DataFrame
+    # features_df = pd.DataFrame.from_dict(feature_dict)
+
+    # Save to CSV
+    # if to_csv:
+    #     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
+    #     features_df.to_csv(output_csv, index=False)
+    #     print(f"\nAll features saved to: {output_csv}")
+
+    # return features_df
+
 if __name__ == "__main__":
     from read_data import get_random_data_from_directory
     mesh = trimesh.load(get_random_data_from_directory(parent_directory="normalized_data"))
     scalars = extract_scalar_features(mesh)
     print(scalars)
+
+    hist_feats = extract_histogram_features(mesh)
+    print(hist_feats)
+
+
