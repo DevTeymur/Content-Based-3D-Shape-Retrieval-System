@@ -191,68 +191,53 @@ def standardize_features_db(features_df, columns_to_standardize):
     return features_df, std_params
 
 
+# --- Geometric alignment utilities ---
+def align_mesh_pca(mesh, verbose=False):
+    """
+    Align mesh so its principal axes coincide with coordinate axes.
+    Largest variance → X, smallest → Z.
+    """
+    vertices = np.asarray(mesh.vertices)
+    centered = vertices - np.mean(vertices, axis=0)
+    cov = np.cov(centered.T)
+    eigvals, eigvecs = np.linalg.eigh(cov)
+    order = np.argsort(eigvals)[::-1]
+    rotation = eigvecs[:, order]
+    mesh.vertices = np.dot(centered, rotation)
+    if verbose:
+        print("PCA alignment complete.")
+    return mesh
 
-import os
-import pandas as pd
-from collections import defaultdict
-import trimesh
-# from features_helpers import extract_scalar_features_single_mesh, extract_hist_features_single_mesh, BINS, hist_feature_methods
+def flip_mesh_orientation(mesh, verbose=False):
+    """
+    Flip mesh along axes so major mass lies on positive side.
+    """
+    centers = mesh.triangles_center
+    inertia = np.sum(np.sign(centers) * (centers ** 2), axis=0)
+    flips = np.sign(inertia)
+    mesh.vertices *= flips
+    if verbose:
+        print(f"Applied flipping along axes {flips}")
+    return mesh
 
-# def extract_features_db(root_dir='normalized_data', to_csv=True, output_csv='stats/features.csv'):
-#     """
-#     Extracts scalar + histogram features for all meshes in the normalized DB.
-#     Returns a DataFrame with one row per mesh.
-#     """
-#     feature_dict = defaultdict(list)
 
-#     for category in os.listdir(root_dir):
-#         if category.startswith('.'):  # skip hidden/system files
-#             continue
-
-#         category_path = os.path.join(root_dir, category)
-#         for mesh_file in os.listdir(category_path):
-#             if mesh_file.startswith('.'):
-#                 continue
-
-#             mesh_path = os.path.join(category_path, mesh_file)
-#             mesh = trimesh.load(mesh_path)
-
-#             # Basic info
-#             feature_dict['filename'].append(mesh_file)
-#             feature_dict['category'].append(category)
-#             feature_dict['path'].append(mesh_path)
-
-#             # Scalar features
-#             scalar_feats = extract_scalar_features_single_mesh(mesh)
-#             for key, value in scalar_feats.items():
-#                 feature_dict[key].append(value)
-
-#             # Histogram features
-#             hist_feats = extract_hist_features_single_mesh(mesh, returntype='dictionary')
-#             for feat_name, bins_values in hist_feats.items():
-#                 for i, bin_val in enumerate(bins_values):
-#                     feature_dict[f"{feat_name}_{i}"].append(bin_val)
-
-#             print(f"Extracted features: {mesh_file}")
-
-    # Convert to DataFrame
-    # features_df = pd.DataFrame.from_dict(feature_dict)
-
-    # Save to CSV
-    # if to_csv:
-    #     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
-    #     features_df.to_csv(output_csv, index=False)
-    #     print(f"\nAll features saved to: {output_csv}")
-
-    # return features_df
 
 if __name__ == "__main__":
     from read_data import get_random_data_from_directory
     mesh = trimesh.load(get_random_data_from_directory(parent_directory="normalized_data"))
+
+    if not mesh.is_watertight:
+        mesh.fill_holes()
+
+    # Ensure alignment and flipping before feature extraction
+    mesh = align_mesh_pca(mesh)
+    mesh = flip_mesh_orientation(mesh)
+
     scalars = extract_scalar_features(mesh)
     print(scalars)
 
     hist_feats = extract_histogram_features(mesh)
     print(hist_feats)
+
 
 

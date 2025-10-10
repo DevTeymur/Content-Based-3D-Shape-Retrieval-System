@@ -5,7 +5,7 @@ import numpy as np
 import open3d as o3d
 import pandas as pd
 
-logs = 0  # 0: no logs, 1: some logs, 2: detailed logs
+logs = 1  # 0: no logs, 1: some logs, 2: detailed logs
 step = 1
 display = True  # Whether to display meshes or not
 
@@ -17,10 +17,10 @@ def step1(logs=0, display=True):
     # Example 2 
     # mesh = read_data('resampled_data/Hand/D01172_9178.obj')
     # Example 3 - Random
-    mesh = read_data("/Users/tima/Documents/DASC/Multimedia Retreival/Multimedia-Retrieval/normalized_data/Bed/D00031_8609.obj")
-    # show_mesh_simple(mesh) if display else None 
-    from plots import visualize_normalized_shape
-    visualize_normalized_shape(get_random_data_from_directory(parent_directory="normalized_data"), axes_size=.5)
+    mesh = read_data(get_random_data_from_directory(parent_directory="data"))
+    show_mesh_simple(mesh) if display else None 
+    # from plots import visualize_normalized_shape
+    # visualize_normalized_shape(get_random_data_from_directory(parent_directory="normalized_data"), axes_size=.5)
 
 def step2(logs=0, display=True):
     # Step 2.1
@@ -149,14 +149,5 @@ def step3(logs=0, display=True):
     pass
 
 
-    from read_data import get_random_data_from_directory
-    # Example 1
-    # mesh = read_data('resampled_data/Car/m1518.obj')
-    # Example 2 
-    # mesh = read_data('resampled_data/Hand/D01172_9178.obj')
-    # Example 3 - Random
-    mesh = read_data("/Users/tima/Documents/DASC/Multimedia Retreival/Multimedia-Retrieval/normalized_data/Bed/D00031_8609.obj")
-    # show_mesh_simple(mesh) if display else None 
-    from plots import visualize_normalized_shape
-    visualize_normalized_shape(get_random_data_from_directory(parent_directory="normalized_data"), axes_size=.5)
 
+step1(logs=logs, display=display) if step==1 else None
