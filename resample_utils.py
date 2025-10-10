@@ -29,6 +29,7 @@ def refine_mesh(mesh_path: str, target=7500, logs=1):
     ms = pymeshlab.MeshSet()
     ms.load_new_mesh(str(mesh_path))
     old_vertices = ms.current_mesh().vertex_number()
+    old_faces = ms.current_mesh().face_number() 
     class_name = mesh_path.parent.name
     obj_name = mesh_path.stem
 
@@ -41,12 +42,13 @@ def refine_mesh(mesh_path: str, target=7500, logs=1):
         if logs >= 2:
             print(f"Iteration {iteration}: {ms.current_mesh().vertex_number()} vertices")
         # safety check to prevent infinite loop
-        if iteration > 20:
+        if iteration > 15:  
             if logs >= 1:
                 print("[WARN] Refinement stopped: max iterations reached")
             break
 
     new_vertices = ms.current_mesh().vertex_number()
+    new_faces = ms.current_mesh().face_number()  
     save_path = resampled_database_dir / class_name / f"{obj_name}_{new_vertices}.obj"
     save_path.parent.mkdir(parents=True, exist_ok=True)
     ms.save_current_mesh(str(save_path))
@@ -59,8 +61,8 @@ def refine_mesh(mesh_path: str, target=7500, logs=1):
         "class": class_name,
         "old_vertices": old_vertices,
         "new_vertices": new_vertices,
-        "old_faces": ms.current_mesh().face_number(),
-        "new_faces": ms.current_mesh().face_number()
+        "old_faces": old_faces,     
+        "new_faces": new_faces       
     }
 
 # ---------- Helper: simplify mesh ----------
@@ -73,6 +75,7 @@ def simplify_mesh(mesh_path: str, target=7500, logs=1):
     ms = pymeshlab.MeshSet()
     ms.load_new_mesh(str(mesh_path))
     old_vertices = ms.current_mesh().vertex_number()
+    old_faces = ms.current_mesh().face_number()  
     class_name = mesh_path.parent.name
     obj_name = mesh_path.stem
 
@@ -87,12 +90,13 @@ def simplify_mesh(mesh_path: str, target=7500, logs=1):
         if logs >= 2:
             print(f"Iteration {iteration}: {ms.current_mesh().vertex_number()} vertices")
         percentage_value += 0.05
-        if iteration > 20:
+        if iteration > 15:  
             if logs >= 1:
                 print("[WARN] Simplification stopped: max iterations reached")
             break
 
     new_vertices = ms.current_mesh().vertex_number()
+    new_faces = ms.current_mesh().face_number()  
     save_path = resampled_database_dir / class_name / f"{obj_name}_{new_vertices}.obj"
     save_path.parent.mkdir(parents=True, exist_ok=True)
     ms.save_current_mesh(str(save_path))
@@ -105,8 +109,8 @@ def simplify_mesh(mesh_path: str, target=7500, logs=1):
         "class": class_name,
         "old_vertices": old_vertices,
         "new_vertices": new_vertices,
-        "old_faces": ms.current_mesh().face_number(),
-        "new_faces": ms.current_mesh().face_number()
+        "old_faces": old_faces,      
+        "new_faces": new_faces   
     }
 
 
@@ -138,6 +142,7 @@ def resample_one(mesh_path: str, target=7500, margin=2500, logs=1):
 
     else:
         # within acceptable range, save as-is
+        old_faces = ms.current_mesh().face_number()  
         save_path = resampled_database_dir / class_name / f"{obj_name}_{n_vertices}.obj"
         save_path.parent.mkdir(parents=True, exist_ok=True)
         ms.save_current_mesh(str(save_path))
@@ -148,8 +153,8 @@ def resample_one(mesh_path: str, target=7500, margin=2500, logs=1):
             "class": class_name,
             "old_vertices": n_vertices,
             "new_vertices": n_vertices,
-            "old_faces": ms.current_mesh().face_number(),
-            "new_faces": ms.current_mesh().face_number()
+            "old_faces": old_faces,      
+            "new_faces": old_faces       
         }
 
 # ---------- Resample all meshes in a dataset ----------

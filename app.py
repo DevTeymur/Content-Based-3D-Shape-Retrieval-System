@@ -6,11 +6,11 @@ import open3d as o3d
 import pandas as pd
 
 logs = 1  # 0: no logs, 1: some logs, 2: detailed logs
-step = 1
+step = 2
 display = True  # Whether to display meshes or not
 
 
-def step1(logs=0, display=True):
+def step1(display=True, mode='original'):
     from read_data import get_random_data_from_directory
     # Example 1
     # mesh = read_data('resampled_data/Car/m1518.obj')
@@ -18,12 +18,17 @@ def step1(logs=0, display=True):
     # mesh = read_data('resampled_data/Hand/D01172_9178.obj')
     # Example 3 - Random
     mesh = read_data(get_random_data_from_directory(parent_directory="data"))
-    show_mesh_simple(mesh) if display else None 
-    # from plots import visualize_normalized_shape
-    # visualize_normalized_shape(get_random_data_from_directory(parent_directory="normalized_data"), axes_size=.5)
+    if mode == 'original':
+        show_mesh_simple(mesh) if display else None 
+    elif mode == 'normalized':
+        from plots import visualize_normalized_shape
+        visualize_normalized_shape(get_random_data_from_directory(parent_directory="normalized_data"), axes_size=.5)
+    else:
+        raise ValueError("Mode must be 'original' or 'normalized'")
+
 
 def step2(logs=0, display=True):
-    # Step 2.1
+    # Step 2.1 - this step done and correct no need to change
     from get_stats import extract_stats
     process_meshes = False
     if process_meshes:
@@ -39,7 +44,7 @@ def step2(logs=0, display=True):
         df = pd.read_csv("stats/original_stats.csv")
     print("done")
 
-    # Step 2.2
+    # Step 2.2 - same for this step, no further changes needed
     from get_stats import compute_averages, detect_outliers
     print("Computing averages for original...", end=" ")
     avg_vertices, avg_faces = compute_averages(df)
@@ -55,7 +60,7 @@ def step2(logs=0, display=True):
     avg_shape_path = avg_shape_row["file"] 
 
     # Load and visualize with Open3D
-    show_mesh_simple(read_data(avg_shape_path)) if display else None
+    # show_mesh_simple(read_data(avg_shape_path)) if display else None
 
     print("Detecting outliers...", end=" ")
     outliers = detect_outliers(df, avg_vertices, avg_faces)
@@ -66,23 +71,26 @@ def step2(logs=0, display=True):
     min_shape, max_shape = df.loc[df["num_vertices"].idxmin()], df.loc[df["num_vertices"].idxmax()]
 
     # Visualize outliers
-    for shape in [min_shape, max_shape]:
-        show_mesh_simple(read_data(shape["file"])) if display else None
+    # for shape in [min_shape, max_shape]:
+    #     show_mesh_simple(read_data(shape["file"])) if display else None
 
     print("Plotting histograms...", end=" ")
-    plot_histograms(df, step='2_2') if display else None
+    # plot_histograms(df, step='2_2') if display else None
     print("done")
 
+
     # Step 2.3
+    print("---------Resampling step---------")
     resample_meshes = False
     if resample_meshes:
-        from new_resample import resample_all
+        from resample_utils import resample_all
         print("Resampling meshes...")
-        resample_all(database_dir="data", target=7000, margin=2000, logs=logs)
+        resample_all(database_dir="data", target=7500, margin=2500, logs=1)
         print("done")
+
     
     # Step 2.4
-    process_resampled_meshes = False
+    process_resampled_meshes = True
     if process_resampled_meshes:
         print("Extracting stats from resampled meshes...", end=" ")
         all_data = extract_stats(folder_path="resampled_data", logs=False) 
@@ -106,7 +114,9 @@ def step2(logs=0, display=True):
     plot_histograms(resampled_df, step='2_4') 
     print("done")
 
+    exit()
     # Step 2.5
+    print("---------Normalization step---------")
     normalize_meshes = False
     if normalize_meshes == True:
         from normalize import normalize_database
@@ -151,3 +161,4 @@ def step3(logs=0, display=True):
 
 
 step1(logs=logs, display=display) if step==1 else None
+step2(logs=logs, display=False) if step==2 else None
