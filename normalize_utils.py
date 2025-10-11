@@ -13,25 +13,31 @@ import tempfile
 
 # Step 2.5 -Translate mesh to origin
 def translate_mesh(mesh, logs=0):
-    """Translate mesh so its barycenter coincides with the origin."""
-    vertices = np.asarray(mesh.vertices)
-    barycenter = vertices.mean(axis=0)
-    mesh.translate(-barycenter)
+    """
+    Translate mesh so barycenter coincides with origin.
+    Mathematical formula: barycenter = (1/N) * Σvi
+    Translation: vi' = vi - barycenter
+    """
+    centroid = mesh.get_center()
+    mesh.translate(-centroid)
     if logs:
-        print(f"Translated mesh to origin. Barycenter: {barycenter}")
+        print(f"Translated by: {-centroid}")
     return mesh
 
 # Step 2.5 - Scale mesh to fit unit cube
 def scale_mesh(mesh, target_size=1.0, logs=0):
-    """Scale mesh uniformly so it fits into a unit cube (or target_size cube)."""
+    """
+    Scale mesh uniformly to fit in unit cube.
+    Mathematical formula: s = target_size / max(bbox_dimensions)
+    Scaling: vi' = s * vi (applied after translation to origin)
+    """
     bbox = mesh.get_axis_aligned_bounding_box()
-    extent = bbox.get_extent()  # x, y, z lengths
-    max_dim = max(extent)
-    if max_dim > 0:
-        scale_factor = target_size / max_dim
-        mesh.scale(scale_factor, center=(0,0,0))
-        if logs:
-            print(f"Scaled mesh by factor {scale_factor}. Extent: {extent}")
+    bbox_extent = bbox.get_extent()
+    max_extent = max(bbox_extent)
+    scale_factor = target_size / max_extent
+    mesh.scale(scale_factor, center=(0, 0, 0))
+    if logs:
+        print(f"Scaled by factor: {scale_factor:.6f}")
     return mesh
 
 # Step 2.5 - Save normalized mesh
@@ -73,6 +79,14 @@ def normalize_database(input_dir, output_dir, logs=0):
         if logs:
             print(f"Normalized: {mesh_file}")
 
+    # Add verification at the end
+    if logs:
+        print("\nVerifying normalized meshes...")
+        verification_passed = verify_normalized_database(output_dir, logs=logs)
+        if verification_passed:
+            print("✅ All meshes properly normalized!")
+        else:
+            print("⚠️ Some meshes may not be properly normalized")
 
 
 def center_mesh(mesh, verbose=False):
@@ -158,6 +172,119 @@ def full_normalization(mesh, verbose=False):
         print("[Normalization] Full normalization complete.")
     
     return mesh
+
+
+# Add this verification function
+def verify_normalization(mesh, logs=0):
+    """Verify that mesh is properly normalized"""
+    centroid = mesh.get_center()
+    bbox = mesh.get_axis_aligned_bounding_box()
+    bbox_extent = bbox.get_extent()
+    max_extent = max(bbox_extent)
+    
+    if logs:
+        print(f"Centroid: {centroid}")
+        print(f"Max extent: {max_extent:.6f}")
+    
+    # Check if properly normalized (with small tolerance)
+    centroid_ok = np.allclose(centroid, [0, 0, 0], atol=1e-6)
+    scale_ok = abs(max_extent - 1.0) < 1e-6
+    
+    return centroid_ok and scale_ok
+
+
+def verify_normalized_database(normalized_dir, logs=0):
+    """Check that all normalized meshes are properly centered and scaled"""
+    from get_stats import extract_stats
+    
+    stats = extract_stats(normalized_dir, logs=False)
+    issues = []
+    
+    for stat in stats:
+        from get_stats import read_data
+        file_path = stat['file']
+        mesh = read_data(file_path)
+        
+        if not verify_normalization(mesh, logs=0):
+            issues.append(file_path)
+    
+    if logs:
+        print(f"Normalization verification: {len(stats) - len(issues)}/{len(stats)} passed")
+        if issues:
+            print("Issues found in:", issues[:5])  # Show first 5
+    
+    return len(issues) == 0
+
+
+def normalize_filtered_database(input_dir, output_dir, filter_csv, logs=0):
+    """
+    Normalize only meshes that passed the resampling threshold.
+    
+    Args:
+        input_dir: Directory containing resampled meshes  
+        output_dir: Directory to save normalized meshes
+        filter_csv: Path to CSV file with resampling flags
+        logs: Logging level
+    """
+    import pandas as pd
+    
+    # Read the CSV with flags
+    df = pd.read_csv(filter_csv)
+    
+    # Filter to only files within threshold
+    valid_files = df[df['within_threshold'] == True]
+    
+    if logs:
+        total_files = len(df)
+        filtered_files = len(valid_files)
+        skipped_files = total_files - filtered_files
+        print(f"Resampling filter results:")
+        print(f"  Total files: {total_files}")
+        print(f"  Within threshold (5K-10K vertices): {filtered_files}")
+        print(f"  Skipped (outside threshold): {skipped_files}")
+        print(f"  Success rate: {filtered_files/total_files*100:.1f}%")
+
+    # Progress bar
+    try:
+        from tqdm import tqdm
+        iterator = tqdm(valid_files.iterrows(), total=len(valid_files), desc="Normalizing valid meshes")
+    except ImportError:
+        iterator = valid_files.iterrows()
+
+    normalized_count = 0
+    skipped_count = 0
+    
+    for _, row in iterator:
+        mesh_file = Path(row['file'])
+        
+        # Check if file exists
+        if not mesh_file.exists():
+            if logs >= 2:
+                print(f"File not found: {mesh_file}")
+            skipped_count += 1
+            continue
+            
+        try:
+            mesh = o3d.io.read_triangle_mesh(str(mesh_file))
+            mesh.compute_vertex_normals()
+
+            mesh = translate_mesh(mesh, logs=logs if logs >= 2 else 0)
+            mesh = scale_mesh(mesh, logs=logs if logs >= 2 else 0)
+            save_normalized_mesh(mesh, mesh_file, output_dir, logs=logs if logs >= 2 else 0)
+            
+            normalized_count += 1
+            if logs >= 2:
+                print(f"Normalized: {mesh_file}")
+                
+        except Exception as e:
+            if logs:
+                print(f"Error processing {mesh_file}: {e}")
+            skipped_count += 1
+
+    if logs:
+        print(f"\nNormalization complete:")
+        print(f"  Successfully normalized: {normalized_count}")
+        print(f"  Skipped/failed: {skipped_count}")
 
 
 if __name__ == "__main__":
