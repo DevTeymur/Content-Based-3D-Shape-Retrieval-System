@@ -185,16 +185,6 @@ class NormalizedShapeViewer:
             self.scene.scene.remove_geometry("bbox")
 
 
-if __name__=="__main__":
-    # visualize_normalized_shape("normalized_data/Insect/D00291_5256.obj", axes_size=.5)
-    df = pd.read_csv("stats/original_stats.csv")
-    df = df.drop(columns=["file"])
-    df = df.rename(columns={"num_vertices": "vertices", "num_faces": "faces"})
-    df = df[["vertices", "faces"]]
-    df = df.astype(float)
-    plot_boxplots(df)
-
-
 def plot_mesh_comparison(mesh1_path, mesh2_path=None, labels=None, title=None, save_path=None, show_stats=True, interactive=False):
     """
     Plot mesh(es) for comparison. Can show single mesh or side-by-side comparison.
@@ -354,21 +344,33 @@ def plot_original_vs_resampled(original_path, resampled_path=None, class_name=No
 
 
 if __name__ == "__main__":
+    from read_data import get_random_data_from_directory
+    path = get_random_data_from_directory(parent_directory="normalized_data")
     # Single mesh
-    plot_single_mesh("data/Bed/D00031.obj", title="Bed Shape")
+    plot_single_mesh(path, title=" ")
 
     # Original vs Resampled (auto-find resampled file)
-    plot_original_vs_resampled("data/Bed/D00031.obj", class_name="Bed")
+    # plot_original_vs_resampled("data/Bed/D00031.obj", class_name="Bed")
 
     # Custom comparison
-    plot_mesh_comparison(
-        "data/Bed/D00031.obj", 
-        "resampled_data/Bed/D00031_7500.obj",
-        labels=['Before', 'After'],
-        title="Resampling Result",
-        save_path="img/bed_comparison.png",
-        interactive=True
-    )
+    # plot_mesh_comparison(
+    #     "data/Bed/D00031.obj", 
+    #     "resampled_data/Bed/D00031_7500.obj",
+    #     labels=['Before', 'After'],
+    #     title="Resampling Result",
+    #     save_path="img/bed_comparison.png",
+    #     interactive=True
+    # )
 
     # Just one mesh with interactive view
-    plot_mesh_comparison("data/Car/m1518.obj", interactive=True)
+    # plot_mesh_comparison(path, interactive=True)
+
+
+# if __name__=="__main__":
+#     # visualize_normalized_shape("normalized_data/Insect/D00291_5256.obj", axes_size=.5)
+#     df = pd.read_csv("stats/original_stats.csv")
+#     df = df.drop(columns=["file"])
+#     df = df.rename(columns={"num_vertices": "vertices", "num_faces": "faces"})
+#     df = df[["vertices", "faces"]]
+#     df = df.astype(float)
+#     plot_boxplots(df)

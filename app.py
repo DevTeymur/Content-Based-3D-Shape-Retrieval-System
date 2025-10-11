@@ -6,7 +6,7 @@ import open3d as o3d
 import pandas as pd
 
 logs = 1  # 0: no logs, 1: some logs, 2: detailed logs
-step = 2
+step = 1
 display = True  # Whether to display meshes or not
 
 
@@ -90,7 +90,7 @@ def step2(logs=0, display=True):
 
     
     # Step 2.4
-    process_resampled_meshes = True
+    process_resampled_meshes = False
     if process_resampled_meshes:
         print("Extracting stats from resampled meshes...", end=" ")
         all_data = extract_stats(folder_path="resampled_data", logs=False) 
@@ -111,19 +111,21 @@ def step2(logs=0, display=True):
 
     # Histograms after resampling
     print("Plotting histograms...", end=" ")
-    plot_histograms(resampled_df, step='2_4') 
+    # plot_histograms(resampled_df, step='2_4') 
     print("done")
 
-    exit()
+
     # Step 2.5
-    print("---------Normalization step---------")
+    print("---------Normalization step (filtered)---------")
     normalize_meshes = False
-    if normalize_meshes == True:
-        from normalize import normalize_database
-        input_database = "resampled_data"  # original/resampled database
-        output_database = "normalized_data"  # where normalized meshes will be saved
-        normalize_database(input_database, output_database, logs=logs)
-        print("Normalization complete.")
+    if normalize_meshes:
+        from normalize_utils import normalize_filtered_database  # Use new function
+        input_database = "resampled_data"
+        output_database = "normalized_data"
+        filter_csv = "stats/resampled_stats_with_flags.csv"  # CSV with flags from draft.py
+        
+        normalize_filtered_database(input_database, output_database, filter_csv, logs=logs)
+        print("Filtered normalization complete.")
 
     process_normalized_meshes = False
     if process_normalized_meshes:
@@ -160,5 +162,5 @@ def step3(logs=0, display=True):
 
 
 
-step1(logs=logs, display=display) if step==1 else None
+step1(display=display, mode='normalized') if step==1 else None
 step2(logs=logs, display=False) if step==2 else None
