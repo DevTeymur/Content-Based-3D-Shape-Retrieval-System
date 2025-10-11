@@ -1,3 +1,4 @@
+from pathlib import Path
 import open3d as o3d
 import numpy as np
 import pandas as pd
@@ -194,3 +195,180 @@ if __name__=="__main__":
     plot_boxplots(df)
 
 
+def plot_mesh_comparison(mesh1_path, mesh2_path=None, labels=None, title=None, save_path=None, show_stats=True, interactive=False):
+    """
+    Plot mesh(es) for comparison. Can show single mesh or side-by-side comparison.
+    
+    Args:
+        mesh1_path: Path to first mesh file
+        mesh2_path: Path to second mesh file (optional, if None shows only first mesh)
+        labels: List of labels for the meshes (e.g., ['Original', 'Resampled'])
+        title: Overall title for the plot
+        save_path: Path to save the plot image (optional)
+        show_stats: Whether to print mesh statistics
+        interactive: Whether to show interactive Open3D visualization after matplotlib
+    """
+    from read_data import read_data
+    from plots import show_mesh_simple
+    import matplotlib.pyplot as plt
+    from pathlib import Path
+    import numpy as np
+    
+    # Load first mesh
+    mesh1 = read_data(mesh1_path)
+    mesh1_name = Path(mesh1_path).stem
+    
+    # Get mesh1 statistics
+    vertices1 = np.asarray(mesh1.vertices)
+    triangles1 = np.asarray(mesh1.triangles)
+    n_vertices1 = len(vertices1)
+    n_faces1 = len(triangles1)
+    
+    # Set default labels
+    if labels is None:
+        labels = [mesh1_name]
+        if mesh2_path:
+            labels.append(Path(mesh2_path).stem)
+    
+    # Print statistics
+    if show_stats:
+        print("=" * 60)
+        print(f"MESH VISUALIZATION: {labels[0]}")
+        if mesh2_path:
+            print(f" vs {labels[1]}")
+        print("=" * 60)
+        print(f"{labels[0]}: {n_vertices1:,} vertices, {n_faces1:,} faces")
+    
+    # Single mesh plot
+    if mesh2_path is None:
+        fig = plt.figure(figsize=(10, 8))
+        ax = fig.add_subplot(111, projection='3d')
+        
+        # Plot mesh
+        ax.plot_trisurf(vertices1[:, 0], vertices1[:, 1], vertices1[:, 2], 
+                       triangles=triangles1, alpha=0.8, cmap='viridis')
+        
+        ax.set_title(f'{labels[0]}\n{n_vertices1:,} vertices, {n_faces1:,} faces', fontsize=14)
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        ax.view_init(elev=20, azim=45)
+        
+        if title:
+            fig.suptitle(title, fontsize=16)
+        
+    # Side-by-side comparison
+    else:
+        # Load second mesh
+        mesh2 = read_data(mesh2_path)
+        vertices2 = np.asarray(mesh2.vertices)
+        triangles2 = np.asarray(mesh2.triangles)
+        n_vertices2 = len(vertices2)
+        n_faces2 = len(triangles2)
+        
+        if show_stats:
+            print(f"{labels[1]}: {n_vertices2:,} vertices, {n_faces2:,} faces")
+            if n_vertices1 != n_vertices2:
+                change = n_vertices2 - n_vertices1
+                percentage = (n_vertices2 / n_vertices1) * 100
+                print(f"Change: {change:+,} vertices ({percentage:.1f}%)")
+            print("=" * 60)
+        
+        # Create side-by-side plot
+        fig = plt.figure(figsize=(16, 8))
+        
+        # First mesh
+        ax1 = fig.add_subplot(121, projection='3d')
+        ax1.plot_trisurf(vertices1[:, 0], vertices1[:, 1], vertices1[:, 2], 
+                        triangles=triangles1, alpha=0.8, cmap='viridis')
+        ax1.set_title(f'{labels[0]}\n{n_vertices1:,} vertices, {n_faces1:,} faces', fontsize=12)
+        ax1.set_xlabel('X')
+        ax1.set_ylabel('Y')
+        ax1.set_zlabel('Z')
+        ax1.view_init(elev=20, azim=45)
+        
+        # Second mesh
+        ax2 = fig.add_subplot(122, projection='3d')
+        ax2.plot_trisurf(vertices2[:, 0], vertices2[:, 1], vertices2[:, 2], 
+                        triangles=triangles2, alpha=0.8, cmap='viridis')
+        ax2.set_title(f'{labels[1]}\n{n_vertices2:,} vertices, {n_faces2:,} faces', fontsize=12)
+        ax2.set_xlabel('X')
+        ax2.set_ylabel('Y')
+        ax2.set_zlabel('Z')
+        ax2.view_init(elev=20, azim=45)
+        
+        # Overall title
+        if title is None:
+            title = f'Mesh Comparison: {labels[0]} vs {labels[1]}'
+        fig.suptitle(title, fontsize=16)
+    
+    plt.tight_layout()
+    
+    # Save if requested
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"Plot saved to: {save_path}")
+    
+    plt.show()
+    
+    # Interactive visualization if requested
+    if interactive:
+        print("\nShowing interactive Open3D visualizations...")
+        print("Close the window to continue.")
+        
+        print(f"Showing {labels[0]}...")
+        show_mesh_simple(mesh1)
+        
+        if mesh2_path:
+            print(f"Showing {labels[1]}...")
+            mesh2 = read_data(mesh2_path)
+            show_mesh_simple(mesh2)
+
+# Convenience wrapper functions for common use cases
+def plot_single_mesh(mesh_path, title=None, save_path=None, interactive=False):
+    """Plot a single mesh"""
+    plot_mesh_comparison(mesh_path, title=title, save_path=save_path, interactive=interactive)
+
+def plot_original_vs_resampled(original_path, resampled_path=None, class_name=None, save_path=None, interactive=False):
+    """Plot original vs resampled mesh comparison"""
+    # Auto-find resampled file if not provided
+    if resampled_path is None and class_name:
+        obj_name = Path(original_path).stem
+        resampled_dir = Path("resampled_data") / class_name
+        resampled_files = list(resampled_dir.glob(f"{obj_name}_*.obj"))
+        if resampled_files:
+            resampled_path = str(resampled_files[0])
+    
+    if resampled_path:
+        plot_mesh_comparison(
+            original_path, 
+            resampled_path, 
+            labels=['Original', 'Resampled'],
+            title=f'Original vs Resampled: {Path(original_path).stem}',
+            save_path=save_path,
+            interactive=interactive
+        )
+    else:
+        print(f"No resampled file found for {original_path}")
+
+
+
+if __name__ == "__main__":
+    # Single mesh
+    plot_single_mesh("data/Bed/D00031.obj", title="Bed Shape")
+
+    # Original vs Resampled (auto-find resampled file)
+    plot_original_vs_resampled("data/Bed/D00031.obj", class_name="Bed")
+
+    # Custom comparison
+    plot_mesh_comparison(
+        "data/Bed/D00031.obj", 
+        "resampled_data/Bed/D00031_7500.obj",
+        labels=['Before', 'After'],
+        title="Resampling Result",
+        save_path="img/bed_comparison.png",
+        interactive=True
+    )
+
+    # Just one mesh with interactive view
+    plot_mesh_comparison("data/Car/m1518.obj", interactive=True)
