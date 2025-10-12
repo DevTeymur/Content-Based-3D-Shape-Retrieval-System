@@ -31,21 +31,21 @@ def get_resampled_filenames(object_path):
     return filenames
 
 # Step 1
-def get_data_from_directory(directory_name=None, logs=True):
+def get_data_from_directory(parent_directory = 'data', directory_name=None, logs=True):
     if directory_name is None:
         # Pick a random folder from data/
         directory_name = random.choice([
-            os.path.join("data", d)
-            for d in os.listdir("data")
-            if os.path.isdir(os.path.join("data", d))
+            os.path.join(parent_directory, d)
+            for d in os.listdir(parent_directory)
+            if os.path.isdir(os.path.join(parent_directory, d))
         ])
         print(f"Selected random directory: {directory_name}") if logs else None
-    
-    if not os.path.exists(directory_name):
+
+    if not os.path.exists(parent_directory + '/' + directory_name):
         raise ValueError(f"Directory {directory_name} does not exist.")
     
     # Pick a random file from the chosen directory
-    files = [f for f in os.listdir(directory_name) if f.endswith(('.obj', '.ply', '.stl'))]
+    files = [f for f in os.listdir(parent_directory + '/' + directory_name) if f.endswith(('.obj', '.ply', '.stl'))]
     if not files:
         raise ValueError(f"No .obj, .ply, or .stl files found in {directory_name}.")
     
