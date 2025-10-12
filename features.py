@@ -113,7 +113,10 @@ def compute_d1(mesh):
 def compute_d2(mesh):
     """Distance between 2 random vertices."""
     vertices = list(mesh.vertices)
-    distances = [np.linalg.norm(random.sample(vertices, 2)[1] - random.sample(vertices, 2)[0]) for _ in range(SAMPLE_N)]
+    distances = []
+    for _ in range(SAMPLE_N):
+        v1, v2 = random.sample(vertices, 2)
+        distances.append(np.linalg.norm(v1 - v2))
     return histogram(distances, bins=BINS, value_range=HIST_RANGES['D2'])
 
 def compute_d3(mesh):
@@ -221,23 +224,67 @@ def flip_mesh_orientation(mesh, verbose=False):
     return mesh
 
 
+# if __name__ == "__main__":
+#     from read_data import get_random_data_from_directory
+#     mesh = trimesh.load(get_random_data_from_directory(parent_directory="normalized_data"))
+
+#     if not mesh.is_watertight:
+#         mesh.fill_holes()
+
+#     # Ensure alignment and flipping before feature extraction
+#     mesh = align_mesh_pca(mesh)
+#     mesh = flip_mesh_orientation(mesh)
+
+#     scalars = extract_scalar_features(mesh)
+#     print(scalars)
+
+#     hist_feats = extract_histogram_features(mesh)
+#     print(hist_feats)
+
+#     from plots import show_mesh_simple
+#     show_mesh_simple(mesh)
+
 
 if __name__ == "__main__":
-    from read_data import get_random_data_from_directory
-    mesh = trimesh.load(get_random_data_from_directory(parent_directory="normalized_data"))
+    from read_data import get_random_data_from_directory, get_data_from_directory
+    from plots import show_mesh_simple
+    from read_data import read_data
+    import trimesh  # Add this import
 
-    if not mesh.is_watertight:
-        mesh.fill_holes()
+    # mesh_path = get_data_from_directory(parent_directory="normalized_data", directory_name="Wheel")
+    random.seed()
+    mesh_path = get_random_data_from_directory(parent_directory="normalized_data")
+    # mesh_path = "normalized_data/Truck/D00010_6939.obj"
 
-    # Ensure alignment and flipping before feature extraction
-    mesh = align_mesh_pca(mesh)
-    mesh = flip_mesh_orientation(mesh)
-
+    # Load as Open3D for visualization
+    mesh_o3d = read_data(mesh_path)
+    
+    # Load as Trimesh for feature extraction
+    mesh = trimesh.load(mesh_path)
+    
+    print("Before processing:")
+    print(f"  Centroid: {mesh.centroid}")
+    show_mesh_simple(mesh_o3d)  # Show original using Open3D mesh
+    
+    # Process mesh (Trimesh)
+    mesh = align_mesh_pca(mesh, verbose=True)
+    mesh = flip_mesh_orientation(mesh, verbose=True)
+    
+    print("After PCA + flipping:")
+    print(f"  Centroid: {mesh.centroid}")
+    
+    # Convert back to Open3D for visualization
+    import open3d as o3d
+    mesh_o3d_processed = o3d.geometry.TriangleMesh()
+    mesh_o3d_processed.vertices = o3d.utility.Vector3dVector(mesh.vertices)
+    mesh_o3d_processed.triangles = o3d.utility.Vector3iVector(mesh.faces)
+    mesh_o3d_processed.compute_vertex_normals()
+    
+    show_mesh_simple(mesh_o3d_processed)  # Show processed using Open3D mesh
+    
+    # Extract features
     scalars = extract_scalar_features(mesh)
-    print(scalars)
-
     hist_feats = extract_histogram_features(mesh)
-    print(hist_feats)
-
-
-
+    print("Features extracted successfully!")
+    print("Scalar features:", scalars)
+    print("First 10 histogram features:", {k: v for k, v in list(hist_feats.items())[:10]})
