@@ -1,0 +1,10 @@
+numpy
+pandas
+trimesh
+tqdm
+scipy
+scikit-learn
+matplotlib
+seaborn
+PyYAML
+open3d

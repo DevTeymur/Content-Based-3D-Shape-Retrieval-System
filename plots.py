@@ -5,56 +5,119 @@ import pandas as pd
 from matplotlib import pyplot as plt
 
 # Step 1
-def show_mesh_simple(mesh):
-    o3d.visualization.draw_geometries(
-    [mesh],
-    window_name="3D Shape Viewer",
-    width=1500,
-    height=1500,
-    mesh_show_back_face=True  # show both sides of faces
-    )
+def show_mesh_simple(mesh_path_or_object):
+    """
+    Simple mesh visualization using consistent Trimesh pipeline.
+    """
+    import trimesh
+    import matplotlib.pyplot as plt
+    
+    # Handle both file paths and mesh objects
+    if isinstance(mesh_path_or_object, (str, Path)):
+        mesh = trimesh.load(str(mesh_path_or_object))
+        title = f"Mesh: {Path(mesh_path_or_object).name}"
+    else:
+        # Assume it's already a mesh object - convert if needed
+        if hasattr(mesh_path_or_object, 'vertices'):
+            # It's already a Trimesh object
+            mesh = mesh_path_or_object
+        else:
+            # It might be an Open3D mesh - convert to Trimesh
+            vertices = np.asarray(mesh_path_or_object.vertices)
+            faces = np.asarray(mesh_path_or_object.triangles)
+            mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
+        title = "Mesh Visualization"
+    
+    # Plot using same method as visualization
+    vertices = mesh.vertices
+    faces = mesh.faces
+    
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    ax.plot_trisurf(vertices[:, 0], vertices[:, 1], vertices[:, 2], 
+                   triangles=faces, alpha=0.8, cmap='plasma')
+    
+    # Set equal aspect ratio
+    max_range = max(
+        vertices[:, 0].max() - vertices[:, 0].min(),
+        vertices[:, 1].max() - vertices[:, 1].min(),
+        vertices[:, 2].max() - vertices[:, 2].min()
+    ) / 2.0
+    
+    mid_x = (vertices[:, 0].max() + vertices[:, 0].min()) * 0.5
+    mid_y = (vertices[:, 1].max() + vertices[:, 1].min()) * 0.5
+    mid_z = (vertices[:, 2].max() + vertices[:, 2].min()) * 0.5
+    
+    ax.set_xlim(mid_x - max_range, mid_x + max_range)
+    ax.set_ylim(mid_y - max_range, mid_y + max_range)
+    ax.set_zlim(mid_z - max_range, mid_z + max_range)
+    
+    ax.set_title(title)
+    plt.tight_layout()
+    plt.show()
+    
+    return fig, ax
+
 
 # Step 2.5
 def visualize_normalized_shape(mesh_path, show_plot=True, axes_size=0.5, show_bbox=True):
     """
-    Visualize a normalized 3D shape with optional coordinate axes and bounding box.
-
-    Parameters:
-    -----------
-    mesh_path : str or Path
-        Path to the normalized mesh file (.obj, .ply, etc.).
-    show_plot : bool, optional
-        If True, displays the visualization. Default is True.
-    axes_size : float, optional
-        Size of the coordinate axes. Default is 0.5.
-    show_bbox : bool, optional
-        If True, draws the axis-aligned bounding box around the shape. Default is True.
+    Visualize normalized shapes using consistent Trimesh loading.
     """
-    mesh = o3d.io.read_triangle_mesh(str(mesh_path))
-    mesh.compute_vertex_normals()
+    import trimesh
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
     
-    geometries = [mesh]
-
-    if axes_size > 0:
-        axes = o3d.geometry.TriangleMesh.create_coordinate_frame(size=axes_size, origin=[0, 0, 0])
-        geometries.append(axes)
-
+    # Load with Trimesh (same as normalization pipeline)
+    mesh = trimesh.load(str(mesh_path))
+    
+    # Get vertices and faces
+    vertices = mesh.vertices
+    faces = mesh.faces
+    
+    # Create 3D plot
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    # Plot mesh surface
+    ax.plot_trisurf(vertices[:, 0], vertices[:, 1], vertices[:, 2], 
+                   triangles=faces, alpha=0.8, cmap='viridis')
+    
+    # Set equal aspect ratio (IMPORTANT!)
+    max_range = max(
+        vertices[:, 0].max() - vertices[:, 0].min(),
+        vertices[:, 1].max() - vertices[:, 1].min(),
+        vertices[:, 2].max() - vertices[:, 2].min()
+    ) / 2.0
+    
+    mid_x = (vertices[:, 0].max() + vertices[:, 0].min()) * 0.5
+    mid_y = (vertices[:, 1].max() + vertices[:, 1].min()) * 0.5
+    mid_z = (vertices[:, 2].max() + vertices[:, 2].min()) * 0.5
+    
+    ax.set_xlim(mid_x - max_range, mid_x + max_range)
+    ax.set_ylim(mid_y - max_range, mid_y + max_range)
+    ax.set_zlim(mid_z - max_range, mid_z + max_range)
+    
+    # Add coordinate axes if requested
     if show_bbox:
-        bbox = mesh.get_axis_aligned_bounding_box()
-        bbox.color = (1, 0, 0)  # Red bounding box
-        geometries.append(bbox)
-
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y') 
+        ax.set_zlabel('Z')
+        
+        # Draw coordinate axes
+        if axes_size > 0:
+            ax.quiver(0, 0, 0, axes_size, 0, 0, color='red', arrow_length_ratio=0.1)
+            ax.quiver(0, 0, 0, 0, axes_size, 0, color='green', arrow_length_ratio=0.1)
+            ax.quiver(0, 0, 0, 0, 0, axes_size, color='blue', arrow_length_ratio=0.1)
+    
+    ax.set_title(f'Normalized Shape: {Path(mesh_path).name}')
+    plt.tight_layout()
+    
     if show_plot:
-        o3d.visualization.draw_geometries(
-            geometries,
-            window_name="Normalized Shape Viewer",
-            width=1000,
-            height=800,
-            mesh_show_back_face=True
-        )
-
-    # Return geometries for optional further processing
-    return geometries
+        plt.show()
+    
+    return fig, ax
 
 
 # Step 2.2
@@ -346,6 +409,7 @@ def plot_original_vs_resampled(original_path, resampled_path=None, class_name=No
 if __name__ == "__main__":
     from read_data import get_random_data_from_directory
     path = get_random_data_from_directory(parent_directory="normalized_data")
+    path = "normalized_data/Truck/D00241_7626.obj"
     # Single mesh
     plot_single_mesh(path, title=" ")
 

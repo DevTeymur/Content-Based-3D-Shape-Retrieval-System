@@ -308,7 +308,7 @@ if __name__ == "__main__":
     print("\nAnalysis complete! Check 'resampled_analysis.png' and 'class_analysis.png'")
     
     # # Compare some random meshes
-    # print("\n" + "="*60)
-    # print("COMPARING ORIGINAL VS RESAMPLED MESHES")
-    # print("="*60)
-    # compare_random_meshes(n_samples=3)
+    print("\n" + "="*60)
+    print("COMPARING ORIGINAL VS RESAMPLED MESHES")
+    print("="*60)
+    compare_random_meshes(n_samples=1)

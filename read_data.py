@@ -52,25 +52,34 @@ def get_data_from_directory(parent_directory = 'data', directory_name=None, logs
     return os.path.join(directory_name, random.choice(files))
 
 # Step 1
-def get_random_data_from_directory(directory_name=None, parent_directory="data", logs=True):
-    if directory_name is None:
-        # Pick a random folder from data/
-        directory_name = random.choice([
-            os.path.join(parent_directory, d)
-            for d in os.listdir(parent_directory)
-            if os.path.isdir(os.path.join(parent_directory, d))
-        ])
-        print(f"Selected random directory: {directory_name}") if logs else None
+def get_random_data_from_directory(parent_directory="data", directory_name=None):
+    """
+    Get a random file from specified directory or any subdirectory.
+    """
+    import random
+    from pathlib import Path
     
-    if not os.path.exists(directory_name):
-        raise ValueError(f"Directory {directory_name} does not exist.")
+    # Don't set seed here - let it be truly random
+    parent_path = Path(parent_directory)
     
-    # Pick a random file from the chosen directory
-    files = [f for f in os.listdir(directory_name) if f.endswith(('.obj', '.ply', '.stl'))]
+    if directory_name:
+        # Get random file from specific category
+        target_dir = parent_path / directory_name
+        if not target_dir.exists():
+            raise ValueError(f"Directory {target_dir} does not exist")
+        files = list(target_dir.glob("*.obj"))
+    else:
+        # Get random file from any subdirectory
+        files = list(parent_path.glob("**/*.obj"))
+    
     if not files:
-        raise ValueError(f"No .obj, .ply, or .stl files found in {directory_name}.")
+        raise ValueError(f"No .obj files found in {parent_directory}")
     
-    return os.path.join(directory_name, random.choice(files))
+    # Use current time for randomness
+    import time
+    random.seed(int(time.time() * 1000000) % 2**32)
+    
+    return str(random.choice(files))
 
 # Step 1
 def read_data(file_path):

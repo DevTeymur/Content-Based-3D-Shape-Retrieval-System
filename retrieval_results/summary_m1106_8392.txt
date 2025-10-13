@@ -1,0 +1,32 @@
+================================================================================
+3D SHAPE RETRIEVAL SUMMARY
+================================================================================
+Query Mesh: m1106_8392.obj
+Query Category: Tool
+Number of Results: 6
+
+Top Similar Shapes:
+--------------------------------------------------
+ 1. m1383_8722           (Starship    )
+    Combined Distance: -3.3479
+    Scalar: 31096.0928 | Histogram: 0.7827
+
+ 2. m1357_9664           (Starship    )
+    Combined Distance: 0.1200
+    Scalar: 31101.9065 | Histogram: 0.5867
+
+ 3. D00525_8309          (ComputerKeyboard)
+    Combined Distance: 0.3443
+    Scalar: 31102.3441 | Histogram: 0.2218
+
+ 4. D01014_11305         (Train       )
+    Combined Distance: 0.4055
+    Scalar: 31102.4654 | Histogram: 0.1105
+
+ 5. m634_10718           (Musical_Instrument)
+    Combined Distance: 0.4057
+    Scalar: 31102.4649 | Histogram: 0.1162
+
+ 6. D01015_7825          (Knife       )
+    Combined Distance: 0.4067
+    Scalar: 31102.4541 | Histogram: 0.1865

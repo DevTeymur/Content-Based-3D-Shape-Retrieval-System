@@ -11,83 +11,6 @@ from get_stats import extract_stats
 from plots import visualize_normalized_shape
 import tempfile
 
-# Step 2.5 -Translate mesh to origin
-def translate_mesh(mesh, logs=0):
-    """
-    Translate mesh so barycenter coincides with origin.
-    Mathematical formula: barycenter = (1/N) * Σvi
-    Translation: vi' = vi - barycenter
-    """
-    centroid = mesh.get_center()
-    mesh.translate(-centroid)
-    if logs:
-        print(f"Translated by: {-centroid}")
-    return mesh
-
-# Step 2.5 - Scale mesh to fit unit cube
-def scale_mesh(mesh, target_size=1.0, logs=0):
-    """
-    Scale mesh uniformly to fit in unit cube.
-    Mathematical formula: s = target_size / max(bbox_dimensions)
-    Scaling: vi' = s * vi (applied after translation to origin)
-    """
-    bbox = mesh.get_axis_aligned_bounding_box()
-    bbox_extent = bbox.get_extent()
-    max_extent = max(bbox_extent)
-    scale_factor = target_size / max_extent
-    mesh.scale(scale_factor, center=(0, 0, 0))
-    if logs:
-        print(f"Scaled by factor: {scale_factor:.6f}")
-    return mesh
-
-# Step 2.5 - Save normalized mesh
-def save_normalized_mesh(mesh, original_path, output_dir, logs=0):
-    """Save normalized mesh to output directory, keeping folder structure."""
-    original_path = Path(original_path)
-    output_path = Path(output_dir) / original_path.parent.name / original_path.name
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    o3d.io.write_triangle_mesh(str(output_path), mesh)
-    if logs:
-        print(f"Saved normalized mesh to {output_path}")
-    return output_path
-
-# Step 2.5 - Normalize all meshes in database
-def normalize_database(input_dir, output_dir, logs=0):
-    input_dir = Path(input_dir)
-    output_dir = Path(output_dir)
-
-    # Collect all mesh files first
-    mesh_files = []
-    for class_dir in [d for d in input_dir.iterdir() if d.is_dir()]:
-        for mesh_file in class_dir.glob("*.obj"):
-            mesh_files.append((class_dir, mesh_file))
-
-    # Progress bar
-    try:
-        from tqdm import tqdm
-        iterator = tqdm(mesh_files, desc="Normalizing meshes")
-    except ImportError:
-        iterator = mesh_files
-
-    for class_dir, mesh_file in iterator:
-        mesh = o3d.io.read_triangle_mesh(str(mesh_file))
-        mesh.compute_vertex_normals()
-
-        mesh = translate_mesh(mesh, logs=logs)
-        mesh = scale_mesh(mesh, logs=logs)
-        save_normalized_mesh(mesh, mesh_file, output_dir, logs=logs)
-        if logs:
-            print(f"Normalized: {mesh_file}")
-
-    # Add verification at the end
-    if logs:
-        print("\nVerifying normalized meshes...")
-        verification_passed = verify_normalized_database(output_dir, logs=logs)
-        if verification_passed:
-            print("✅ All meshes properly normalized!")
-        else:
-            print("⚠️ Some meshes may not be properly normalized")
-
 
 def center_mesh(mesh, verbose=False):
     """
@@ -174,7 +97,6 @@ def full_normalization(mesh, verbose=False):
     return mesh
 
 
-# Add this verification function
 def verify_normalization(mesh, logs=0):
     """Verify that mesh is properly normalized"""
     centroid = mesh.get_center()
@@ -216,9 +138,9 @@ def verify_normalized_database(normalized_dir, logs=0):
     return len(issues) == 0
 
 
-def normalize_filtered_database(input_dir, output_dir, filter_csv, logs=0):
+def normalize_filtered_database_trimesh(input_dir, output_dir, filter_csv, logs=0):
     """
-    Normalize only meshes that passed the resampling threshold.
+    Normalize only meshes that passed the resampling threshold using Trimesh (better).
     
     Args:
         input_dir: Directory containing resampled meshes  
@@ -227,6 +149,8 @@ def normalize_filtered_database(input_dir, output_dir, filter_csv, logs=0):
         logs: Logging level
     """
     import pandas as pd
+    import trimesh
+    from pathlib import Path
     
     # Read the CSV with flags
     df = pd.read_csv(filter_csv)
@@ -247,7 +171,7 @@ def normalize_filtered_database(input_dir, output_dir, filter_csv, logs=0):
     # Progress bar
     try:
         from tqdm import tqdm
-        iterator = tqdm(valid_files.iterrows(), total=len(valid_files), desc="Normalizing valid meshes")
+        iterator = tqdm(valid_files.iterrows(), total=len(valid_files), desc="Normalizing valid meshes (Trimesh)")
     except ImportError:
         iterator = valid_files.iterrows()
 
@@ -265,12 +189,16 @@ def normalize_filtered_database(input_dir, output_dir, filter_csv, logs=0):
             continue
             
         try:
-            mesh = o3d.io.read_triangle_mesh(str(mesh_file))
-            mesh.compute_vertex_normals()
-
-            mesh = translate_mesh(mesh, logs=logs if logs >= 2 else 0)
-            mesh = scale_mesh(mesh, logs=logs if logs >= 2 else 0)
-            save_normalized_mesh(mesh, mesh_file, output_dir, logs=logs if logs >= 2 else 0)
+            # Load with Trimesh
+            mesh = trimesh.load(str(mesh_file))
+            
+            # Apply full normalization (center + scale + PCA + flip)
+            mesh = full_normalization(mesh, verbose=(logs >= 2))
+            
+            # Save normalized mesh
+            output_path = Path(output_dir) / mesh_file.parent.name / mesh_file.name
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            mesh.export(str(output_path))
             
             normalized_count += 1
             if logs >= 2:
@@ -282,26 +210,53 @@ def normalize_filtered_database(input_dir, output_dir, filter_csv, logs=0):
             skipped_count += 1
 
     if logs:
-        print(f"\nNormalization complete:")
+        print(f"\nTrimesh normalization complete:")
         print(f"  Successfully normalized: {normalized_count}")
         print(f"  Skipped/failed: {skipped_count}")
 
 
+def simple_normalization(mesh, verbose=False):
+    """
+    Simple normalization: center + scale only (no PCA alignment or flipping).
+    
+    Args:
+        mesh: Trimesh object
+        verbose: Print processing steps
+        
+    Returns:
+        Normalized mesh
+    """
+    if verbose:
+        print("    Applying simple normalization...")
+        print(f"      Before: centroid={mesh.centroid}, bounds={mesh.bounds}")
+    
+    # Step 1: Center mesh (move centroid to origin)
+    mesh = center_mesh(mesh, verbose=verbose)
+    
+    # Step 2: Scale to unit size (proportional scaling)
+    mesh = scale_to_unit(mesh, target_size=1.0, verbose=verbose)
+    
+    if verbose:
+        print(f"      After: centroid={mesh.centroid}, bounds={mesh.bounds}")
+    
+    return mesh
+
+
 if __name__ == "__main__":
-    # mode = 'stats'  # 'normalize' or 'stats'
-    # logs = 0  # set to 1 or 2 for more verbose output
-    # if mode == 'normalize':
-    #     input_database = "resampled_data"  # original/resampled database
-    #     output_database = "normalized_data"  # where normalized meshes will be saved
-    #     normalize_database(input_database, output_database, logs=logs)
-    #     print("Normalization complete.")
-    #     all_data = extract_stats(folder_path=output_database, logs=logs)
-    #     df = pd.DataFrame(all_data)
-    #     df.to_csv("normalized_stats.csv", index=False)
-    # elif mode == 'stats':
-    #     from get_stats import plot_histograms
-    #     df = pd.read_csv("stats/normalized_stats.csv")
-    #     plot_histograms(df)
+#     # mode = 'stats'  # 'normalize' or 'stats'
+#     # logs = 0  # set to 1 or 2 for more verbose output
+#     # if mode == 'normalize':
+#     #     input_database = "resampled_data"  # original/resampled database
+#     #     output_database = "normalized_data"  # where normalized meshes will be saved
+#     #     normalize_database(input_database, output_database, logs=logs)
+#     #     print("Normalization complete.")
+#     #     all_data = extract_stats(folder_path=output_database, logs=logs)
+#     #     df = pd.DataFrame(all_data)
+#     #     df.to_csv("normalized_stats.csv", index=False)
+#     # elif mode == 'stats':
+#     #     from get_stats import plot_histograms
+#     #     df = pd.read_csv("stats/normalized_stats.csv")
+#     #     plot_histograms(df)
 
     from read_data import get_random_data_from_directory
     mesh = trimesh.load(get_random_data_from_directory(parent_directory="resampled_data"))

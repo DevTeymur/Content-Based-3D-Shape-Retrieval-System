@@ -1,3 +1,4 @@
+import random
 from plots import show_mesh_simple, plot_histograms
 from read_data import read_data
 
@@ -5,24 +6,21 @@ import numpy as np
 import open3d as o3d
 import pandas as pd
 
-logs = 1  # 0: no logs, 1: some logs, 2: detailed logs
-step = 1
-display = True  # Whether to display meshes or not
 
 
 def step1(display=True, mode='original'):
     from read_data import get_random_data_from_directory
-    # Example 1
-    # mesh = read_data('resampled_data/Car/m1518.obj')
-    # Example 2 
-    # mesh = read_data('resampled_data/Hand/D01172_9178.obj')
-    # Example 3 - Random
-    mesh = read_data(get_random_data_from_directory(parent_directory="data"))
+    
     if mode == 'original':
-        show_mesh_simple(mesh) if display else None 
+        # Test original mesh
+        mesh_path = 'data/Tool/m1106_8392.obj'  # Use path instead of mesh object
+        show_mesh_simple(mesh_path) if display else None 
     elif mode == 'normalized':
         from plots import visualize_normalized_shape
-        visualize_normalized_shape(get_random_data_from_directory(parent_directory="normalized_data"), axes_size=.5)
+        # Test normalized mesh
+        normalized_path = get_random_data_from_directory(parent_directory="normalized_data")
+        normalized_path = "normalized_data_test/Spoon/D00669_5895.obj"
+        visualize_normalized_shape(normalized_path, axes_size=0.5)
     else:
         raise ValueError("Mode must be 'original' or 'normalized'")
 
@@ -117,17 +115,21 @@ def step2(logs=0, display=True):
 
     # Step 2.5
     print("---------Normalization step (filtered)---------")
-    normalize_meshes = False
+    normalize_meshes = True
     if normalize_meshes:
-        from normalize_utils import normalize_filtered_database  # Use new function
+        from normalize_utils import normalize_filtered_database_trimesh  # Use new function
         input_database = "resampled_data"
         output_database = "normalized_data"
         filter_csv = "stats/resampled_stats_with_flags.csv"  # CSV with flags from draft.py
         
-        normalize_filtered_database(input_database, output_database, filter_csv, logs=logs)
+        # OLD - uses Open3D functions (incomplete)
+        # normalize_filtered_database(input_database, output_database, filter_csv, logs=logs)
+
+        # NEW - uses Trimesh functions (complete)
+        normalize_filtered_database_trimesh(input_database, output_database, filter_csv, logs=logs)
         print("Filtered normalization complete.")
 
-    process_normalized_meshes = False
+    process_normalized_meshes = True
     if process_normalized_meshes:
         print("Extracting stats from normalized meshes...", end=" ")
         all_data = extract_stats(folder_path="normalized_data", logs=False) 
@@ -158,9 +160,82 @@ def step2(logs=0, display=True):
 # Step G. Query + distance computation + retrieval.
 # Step H. Final integration in app.py.
 def step3(logs=0, display=True):
-    pass
+    """Step 3: Features extraction and retrieval system"""
+    
+    # Step F: Build features database (FULL DATABASE)
+    build_features_db = False
+    if build_features_db:
+        # First, normalize FULL database with PCA + flipping
+        print("Normalizing FULL database with PCA + flipping...", end=" ")
+        from normalize_utils import normalize_filtered_database_trimesh
+        normalize_filtered_database_trimesh(
+            input_dir="resampled_data",
+            output_dir="normalized_data",  # ← Back to full database
+            filter_csv="stats/resampled_stats_with_flags.csv",
+            logs=logs
+        )
+        print("done")
+        
+        # Build features database from FULL normalized data
+        print("Building features database from FULL dataset...", end=" ")
+        from database_features import extract_features_database
+        features_df = extract_features_database(
+            input_dir="normalized_data",  # ← Full database
+            output_csv="stats/features_database.csv",  # ← Main database
+            filter_csv=None,  # Process all normalized meshes
+            standardize=False,  # ← Keep this False (we learned it works better)
+            logs=(logs > 0)
+        )
+        print("done")
+        print(f"Features database created with {len(features_df)} meshes")
+    
+    # Step G: Test retrieval system on FULL database
+    test_retrieval = False
+    if test_retrieval:
+        print("Testing shape retrieval system on FULL database...", end=" ")
+        from retrieval import test_shape_retrieval
+        results = test_shape_retrieval(
+            features_db_path="stats/features_database.csv",  # ← Full database
+            k=5,
+            visualize=display
+        )
+        print("done") if results is not None else print("failed")
+    
+    # Step H: Query interface on FULL data
+    run_simple_query = True  # ← Set to True when you want to test specific queries
+    if run_simple_query:
+        print("Running query on FULL database...")
+        from retrieval import ShapeRetrieval
+        from read_data import get_random_data_from_directory
+        
+        # Initialize retrieval system with FULL database
+        retrieval_system = ShapeRetrieval("stats/features_database.csv")
+        
+        # Get random query mesh from normalized data (NO SEED!)
+        query_path = get_random_data_from_directory(parent_directory="normalized_data")
+        print(f"Query mesh: {query_path}")
+        
+        # Optional: Show the query mesh first
+        # from plots import show_mesh_simple
+        # print("Query mesh visualization:")
+        # show_mesh_simple(query_path)
+        
+        # Run query with visualization
+        results, fig = retrieval_system.search_and_visualize(
+            query_mesh_path=query_path,
+            k=6,
+            scalar_weight=0.6,
+            exclude_self=True,
+            logs=(logs > 0)
+        )
+        print("Query completed")
 
 
+logs = 1  # 0: no logs, 1: some logs, 2: detailed logs
+step = 3
+display = True  # Whether to display meshes or not
 
-step1(display=display, mode='normalized') if step==1 else None
+
+# step1(display=display, mode='normalized') if step==1 else None
 step2(logs=logs, display=False) if step==2 else None
+step3(logs=logs, display=display) if step==3 else None  # Add this line

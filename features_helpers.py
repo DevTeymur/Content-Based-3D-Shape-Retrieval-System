@@ -54,10 +54,26 @@ def extract_all_features_single_mesh(mesh_path, standardize=False, logs=False):
     if logs:
         print(f"Extracting features from: {mesh_path.name}")
     
-    # Load and normalize mesh
-    mesh = load_and_normalize_mesh(mesh_path)
-    if mesh is None:
+    # Load mesh using trimesh
+    try:
+        mesh = trimesh.load(str(mesh_path))
+    except Exception as e:
+        print(f"Error loading mesh {mesh_path}: {e}")
         return None
+    
+    # Check if mesh is already normalized (skip re-normalization)
+    if "normalized_data" in str(mesh_path):
+        # Mesh is already normalized, use directly
+        if logs:
+            print("  Using already normalized mesh (skipping re-normalization)")
+        normalized_mesh = mesh
+    else:
+        # Mesh needs normalization
+        if logs:
+            print("  Applying normalization...")
+        normalized_mesh = load_and_normalize_mesh(mesh_path)
+        if normalized_mesh is None:
+            return None
     
     # Initialize feature dictionary
     all_features = {}
@@ -71,13 +87,13 @@ def extract_all_features_single_mesh(mesh_path, standardize=False, logs=False):
         # Extract scalar features
         if logs:
             print("  Computing scalar features...")
-        scalar_features = extract_scalar_features(mesh)
+        scalar_features = extract_scalar_features(normalized_mesh)
         all_features.update(scalar_features)
         
         # Extract histogram features
         if logs:
             print("  Computing histogram features...")
-        histogram_features = extract_histogram_features(mesh)
+        histogram_features = extract_histogram_features(normalized_mesh)
         all_features.update(histogram_features)
         
         if logs:
