@@ -1,0 +1,67 @@
+================================================================================
+COMPREHENSIVE DATABASE STATISTICS
+================================================================================
+
+📊 BASIC STATISTICS:
+   Total meshes: 2,006
+   Total categories: 69
+   Total features: 57
+   - Scalar features: 7
+   - Histogram features: 50
+
+🔢 FEATURE BREAKDOWN:
+   Scalar features: area, volume, aabb_volume, compactness, diameter, convexity, eccentricity
+   Histogram features:
+     - A3: 10 bins
+     - D1: 10 bins
+     - D2: 10 bins
+     - D3: 10 bins
+     - D4: 10 bins
+
+📂 CATEGORY DISTRIBUTION:
+   Average meshes per category: 29.1
+   Min meshes per category: 2 (Spoon)
+   Max meshes per category: 137 (Humanoid)
+
+📈 SCALAR FEATURE STATISTICS:
+   area:
+     Range: [0.072, 26.019]
+     Mean: 2.157 ± 2.363
+     Median: 1.409
+   volume:
+     Range: [-1.862, 1.016]
+     Mean: 0.002 ± 0.105
+     Median: 0.000
+   aabb_volume:
+     Range: [0.003, 1.000]
+     Mean: 0.231 ± 0.193
+     Median: 0.171
+   compactness:
+     Range: [66.136, 23597423201913697553744206718075666432000.000]
+     Mean: 11880313760643398187001486540697239552.000 ± 526888118835029557273149830207509626880.000
+     Median: 5928.130
+   diameter:
+     Range: [0.552, 1.703]
+     Mean: 1.071 ± 0.103
+     Median: 1.030
+   convexity:
+     Range: [-3.046, 7.184]
+     Mean: -0.001 ± 0.559
+     Median: -0.002
+   eccentricity:
+     Range: [1.065, 18627.794]
+     Mean: 68.576 ± 488.786
+     Median: 14.584
+
+🔍 DATA QUALITY METRICS:
+   ✅ No missing values detected
+   ✅ No duplicate filenames
+   ⚠️  Outliers detected:
+     - area: 46 outliers
+     - volume: 37 outliers
+     - aabb_volume: 28 outliers
+     - compactness: 1 outliers
+     - diameter: 62 outliers
+     - convexity: 33 outliers
+     - eccentricity: 10 outliers
+================================================================================

@@ -189,17 +189,61 @@ def step3(logs=0, display=True):
         print("done")
         print(f"Features database created with {len(features_df)} meshes")
     
+    # Add after features_df is created:
+    if build_features_db:
+        print("Analyzing feature distributions...", end=" ")
+        
+        # Feature distribution analysis
+        scalar_features = ['area', 'volume', 'diameter', 'compactness', 'convexity', 'eccentricity']
+        
+        import matplotlib.pyplot as plt
+        fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+        axes = axes.flatten()
+        
+        for i, feature in enumerate(scalar_features):
+            if feature in features_df.columns:
+                axes[i].hist(features_df[feature], bins=30, alpha=0.7)
+                axes[i].set_title(f'{feature.title()} Distribution')
+                axes[i].set_xlabel(feature)
+                axes[i].set_ylabel('Count')
+        
+        plt.tight_layout()
+        plt.savefig('img/feature_distributions.png', dpi=300, bbox_inches='tight')
+        if display:
+            plt.show()
+        print("done")
+    
     # Step G: Test retrieval system on FULL database
-    test_retrieval = False
+    test_retrieval = True
     if test_retrieval:
         print("Testing shape retrieval system on FULL database...", end=" ")
-        from retrieval import test_shape_retrieval
-        results = test_shape_retrieval(
-            features_db_path="stats/features_database.csv",  # ← Full database
-            k=5,
-            visualize=display
-        )
-        print("done") if results is not None else print("failed")
+        
+        # Use existing ShapeRetrieval class instead of missing test_shape_retrieval
+        from retrieval import ShapeRetrieval
+        from read_data import get_random_data_from_directory
+        
+        try:
+            # Initialize retrieval system
+            retrieval_system = ShapeRetrieval("stats/features_database.csv")
+            
+            # Test with a random query
+            test_query = get_random_data_from_directory(parent_directory="normalized_data")
+            
+            # Run a quick test query
+            results = retrieval_system.search_similar_shapes(
+                query_mesh_path=test_query,
+                k=5,
+                logs=False  # No detailed logs for test
+            )
+            
+            if results and len(results) > 0:
+                print("done")
+                print(f"Test successful: Found {len(results)} similar shapes")
+            else:
+                print("failed - no results returned")
+                
+        except Exception as e:
+            print(f"failed - {str(e)}")
     
     # Step H: Query interface on FULL data
     run_simple_query = True  # ← Set to True when you want to test specific queries
@@ -226,7 +270,8 @@ def step3(logs=0, display=True):
             k=6,
             scalar_weight=0.6,
             exclude_self=True,
-            logs=(logs > 0)
+            logs=(logs > 0),
+            save_path=f"img/step3_2.png",
         )
         print("Query completed")
 

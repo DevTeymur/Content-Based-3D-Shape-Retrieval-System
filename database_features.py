@@ -316,9 +316,221 @@ def test_database_extraction(input_dir="normalized_data", sample_size=5):
     
     return test_df
 
+def get_comprehensive_database_statistics(features_csv="stats/features_database.csv", 
+                                        save_stats=True, 
+                                        output_file="stats/database_statistics.txt",
+                                        logs=True):
+    """
+    Get comprehensive statistics about the features database.
+    
+    Args:
+        features_csv: Path to features CSV file
+        save_stats: Whether to save statistics to file
+        output_file: Path to save statistics
+        logs: Print detailed statistics
+        
+    Returns:
+        dict: Comprehensive database statistics
+    """
+    # Load the database
+    features_df = pd.read_csv(features_csv)
+    
+    stats = {}
+    
+    # =========================
+    # BASIC STATISTICS
+    # =========================
+    stats['total_meshes'] = len(features_df)
+    stats['categories'] = sorted(features_df['category'].unique().tolist())
+    stats['total_categories'] = len(stats['categories'])
+    stats['meshes_per_category'] = features_df['category'].value_counts().to_dict()
+    
+    # =========================
+    # FEATURE ANALYSIS
+    # =========================
+    # Identify feature types
+    metadata_cols = ['filename', 'filepath', 'category']
+    scalar_features = [col for col in features_df.columns 
+                      if col not in metadata_cols 
+                      and not any(hist in col for hist in ['A3_', 'D1_', 'D2_', 'D3_', 'D4_'])]
+    
+    histogram_features = [col for col in features_df.columns 
+                         if any(hist in col for hist in ['A3_', 'D1_', 'D2_', 'D3_', 'D4_'])]
+    
+    stats['total_features'] = len(features_df.columns) - len(metadata_cols)
+    stats['scalar_features'] = scalar_features
+    stats['scalar_features_count'] = len(scalar_features)
+    stats['histogram_features_count'] = len(histogram_features)
+    
+    # Histogram feature breakdown
+    stats['histogram_breakdown'] = {}
+    for prefix in ['A3', 'D1', 'D2', 'D3', 'D4']:
+        count = len([col for col in histogram_features if col.startswith(prefix + '_')])
+        stats['histogram_breakdown'][prefix] = count
+    
+    # =========================
+    # SCALAR FEATURE STATISTICS
+    # =========================
+    stats['scalar_statistics'] = {}
+    for feature in scalar_features:
+        if feature in features_df.columns:
+            stats['scalar_statistics'][feature] = {
+                'min': features_df[feature].min(),
+                'max': features_df[feature].max(),
+                'mean': features_df[feature].mean(),
+                'std': features_df[feature].std(),
+                'median': features_df[feature].median()
+            }
+    
+    # =========================
+    # CATEGORY DISTRIBUTION ANALYSIS
+    # =========================
+    stats['category_distribution'] = {}
+    stats['category_distribution']['min_meshes'] = min(stats['meshes_per_category'].values())
+    stats['category_distribution']['max_meshes'] = max(stats['meshes_per_category'].values())
+    stats['category_distribution']['avg_meshes'] = np.mean(list(stats['meshes_per_category'].values()))
+    stats['category_distribution']['categories_with_min'] = [cat for cat, count in stats['meshes_per_category'].items() 
+                                                           if count == stats['category_distribution']['min_meshes']]
+    stats['category_distribution']['categories_with_max'] = [cat for cat, count in stats['meshes_per_category'].items() 
+                                                           if count == stats['category_distribution']['max_meshes']]
+    
+    # =========================
+    # DATA QUALITY METRICS
+    # =========================
+    stats['data_quality'] = {}
+    
+    # Check for missing values
+    stats['data_quality']['missing_values'] = {}
+    for col in features_df.columns:
+        missing_count = features_df[col].isnull().sum()
+        if missing_count > 0:
+            stats['data_quality']['missing_values'][col] = missing_count
+    
+    # Check for duplicate filenames
+    stats['data_quality']['duplicate_filenames'] = features_df['filename'].duplicated().sum()
+    
+    # Check for outliers in scalar features (values beyond 3 std from mean)
+    stats['data_quality']['outliers'] = {}
+    for feature in scalar_features:
+        if feature in features_df.columns:
+            mean_val = features_df[feature].mean()
+            std_val = features_df[feature].std()
+            outliers = ((features_df[feature] - mean_val).abs() > 3 * std_val).sum()
+            if outliers > 0:
+                stats['data_quality']['outliers'][feature] = outliers
+    
+    # =========================
+    # FEATURE RANGE ANALYSIS
+    # =========================
+    stats['feature_ranges'] = {}
+    for feature in scalar_features:
+        if feature in features_df.columns:
+            feature_range = features_df[feature].max() - features_df[feature].min()
+            stats['feature_ranges'][feature] = feature_range
+    
+    # =========================
+    # PRINT AND SAVE RESULTS
+    # =========================
+    if logs or save_stats:
+        report = generate_statistics_report(stats)
+        
+        if logs:
+            print(report)
+        
+        if save_stats:
+            with open(output_file, 'w') as f:
+                f.write(report)
+            print(f"\nStatistics saved to: {output_file}")
+    
+    return stats
+
+def generate_statistics_report(stats):
+    """Generate a formatted statistics report."""
+    
+    report = []
+    report.append("=" * 80)
+    report.append("COMPREHENSIVE DATABASE STATISTICS")
+    report.append("=" * 80)
+    
+    # Basic Statistics
+    report.append(f"\n📊 BASIC STATISTICS:")
+    report.append(f"   Total meshes: {stats['total_meshes']:,}")
+    report.append(f"   Total categories: {stats['total_categories']}")
+    report.append(f"   Total features: {stats['total_features']}")
+    report.append(f"   - Scalar features: {stats['scalar_features_count']}")
+    report.append(f"   - Histogram features: {stats['histogram_features_count']}")
+    
+    # Feature Breakdown
+    report.append(f"\n🔢 FEATURE BREAKDOWN:")
+    report.append(f"   Scalar features: {', '.join(stats['scalar_features'])}")
+    report.append(f"   Histogram features:")
+    for prefix, count in stats['histogram_breakdown'].items():
+        report.append(f"     - {prefix}: {count} bins")
+    
+    # Category Distribution
+    report.append(f"\n📂 CATEGORY DISTRIBUTION:")
+    report.append(f"   Average meshes per category: {stats['category_distribution']['avg_meshes']:.1f}")
+    report.append(f"   Min meshes per category: {stats['category_distribution']['min_meshes']} "
+                 f"({', '.join(stats['category_distribution']['categories_with_min'][:3])}{'...' if len(stats['category_distribution']['categories_with_min']) > 3 else ''})")
+    report.append(f"   Max meshes per category: {stats['category_distribution']['max_meshes']} "
+                 f"({', '.join(stats['category_distribution']['categories_with_max'][:3])}{'...' if len(stats['category_distribution']['categories_with_max']) > 3 else ''})")
+    
+    # Scalar Feature Statistics
+    report.append(f"\n📈 SCALAR FEATURE STATISTICS:")
+    for feature, stats_dict in stats['scalar_statistics'].items():
+        report.append(f"   {feature}:")
+        report.append(f"     Range: [{stats_dict['min']:.3f}, {stats_dict['max']:.3f}]")
+        report.append(f"     Mean: {stats_dict['mean']:.3f} ± {stats_dict['std']:.3f}")
+        report.append(f"     Median: {stats_dict['median']:.3f}")
+    
+    # Data Quality
+    report.append(f"\n🔍 DATA QUALITY METRICS:")
+    if not stats['data_quality']['missing_values']:
+        report.append("   ✅ No missing values detected")
+    else:
+        report.append("   ❌ Missing values found:")
+        for col, count in stats['data_quality']['missing_values'].items():
+            report.append(f"     - {col}: {count} missing")
+    
+    if stats['data_quality']['duplicate_filenames'] == 0:
+        report.append("   ✅ No duplicate filenames")
+    else:
+        report.append(f"   ❌ {stats['data_quality']['duplicate_filenames']} duplicate filenames")
+    
+    if not stats['data_quality']['outliers']:
+        report.append("   ✅ No extreme outliers detected (>3σ)")
+    else:
+        report.append("   ⚠️  Outliers detected:")
+        for feature, count in stats['data_quality']['outliers'].items():
+            report.append(f"     - {feature}: {count} outliers")
+    
+    report.append("=" * 80)
+    
+    return "\n".join(report)
+
+# Add this convenience function
+def run_database_analysis(features_csv="stats/features_database.csv"):
+    """
+    Quick function to run complete database analysis.
+    
+    Usage:
+        from database_features import run_database_analysis
+        run_database_analysis()
+    """
+    print("Running comprehensive database analysis...")
+    
+    stats = get_comprehensive_database_statistics(
+        features_csv=features_csv,
+        save_stats=True,
+        output_file="stats/database_statistics.txt",
+        logs=True
+    )
+    
+    return stats
+
 if __name__ == "__main__":
     # Test the implementation
-    print("Testing Step F: Database-wide feature extraction")
+    # print("Testing Step F: Database-wide feature extraction")
     
     # Small test first
     # test_df = test_database_extraction(sample_size=3)
@@ -326,13 +538,17 @@ if __name__ == "__main__":
     # test_df.to_csv("stats/features_test_sample.csv", index=False)
     
     # Full extraction (uncomment when ready)
-    features_db = extract_features_database(
-        input_dir="normalized_data",
-        output_csv="stats/features_database.csv",
-        filter_csv="stats/resampled_stats_with_flags.csv",
-        standardize=True,
-        logs=True
-    )
+    # features_db = extract_features_database(
+    #     input_dir="normalized_data",
+    #     output_csv="stats/features_database.csv",
+    #     filter_csv="stats/resampled_stats_with_flags.csv",
+    #     standardize=True,
+    #     logs=True
+    # )
+
+    features_db = load_features_database(features_csv="stats/features_database.csv", logs=True)
     
     # Get statistics
     stats = get_database_statistics(features_db)
+
+    stats = run_database_analysis("stats/features_database.csv")
