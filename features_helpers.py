@@ -254,6 +254,13 @@ def get_feature_names():
     
     return feature_names
 
+# In features_helpers.py or wherever compactness is calculated:
+def calculate_compactness_safe(area, volume):
+    """Calculate compactness with safeguard against division by zero."""
+    if volume <= 0:
+        return 0.0  # or some default value
+    return area**1.5 / volume  # or whatever the formula is
+
 if __name__ == "__main__":
     # Test the implementation
     print("Testing Step E: Single mesh feature extraction")

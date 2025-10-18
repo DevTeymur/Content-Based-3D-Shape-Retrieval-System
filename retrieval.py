@@ -226,14 +226,29 @@ class ShapeRetrieval:
         if logs:
             print("Standardizing distances...")
             
-        results_df['scalar_dist_standardized'] = standardize_column(results_df['scalar_distance'])[0]
-        results_df['histogram_dist_standardized'] = standardize_column(results_df['histogram_distance'])[0]
-        
+        # Min-max normalization instead of z-score standardization
+        scalar_distances = results_df['scalar_distance'].values
+        histogram_distances = results_df['histogram_distance'].values
+
+        # Min-max normalization (preserves 0 as 0)
+        scalar_min, scalar_max = scalar_distances.min(), scalar_distances.max()
+        hist_min, hist_max = histogram_distances.min(), histogram_distances.max()
+
+        if scalar_max > scalar_min:
+            results_df['scalar_dist_normalized'] = (scalar_distances - scalar_min) / (scalar_max - scalar_min)
+        else:
+            results_df['scalar_dist_normalized'] = 0  # All distances are identical
+
+        if hist_max > hist_min:
+            results_df['histogram_dist_normalized'] = (histogram_distances - hist_min) / (hist_max - hist_min)
+        else:
+            results_df['histogram_dist_normalized'] = 0  # All distances are identical
+
         # Compute combined distance
         histogram_weight = 1.0 - scalar_weight
         results_df['combined_distance'] = (
-            scalar_weight * results_df['scalar_dist_standardized'] + 
-            histogram_weight * results_df['histogram_dist_standardized']
+            scalar_weight * results_df['scalar_dist_normalized'] + 
+            histogram_weight * results_df['histogram_dist_normalized']
         )
         
         # Sort by combined distance

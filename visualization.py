@@ -312,3 +312,26 @@ if __name__ == "__main__":
             print("Visualization test failed!")
     else:
         print("No test mesh file found!")
+
+
+def visualize_shape_retrieval_simple(query_mesh_path, similar_meshes, method_name="SIMPLE"):
+    """
+    Simple visualization for basic distance methods
+    
+    Args:
+        query_mesh_path: Path to query mesh
+        similar_meshes: List of similar mesh results
+        method_name: Name of distance method
+    """
+    import matplotlib.pyplot as plt
+    from plots import show_mesh_simple
+    
+    print(f"Creating {method_name} visualization for {len(similar_meshes)} meshes...")
+    
+    # For now, just show the query mesh
+    # You can extend this to show a grid if needed
+    show_mesh_simple(query_mesh_path)
+    plt.suptitle(f"Query Mesh - {method_name} Distance", fontsize=14)
+    
+    print(f"✅ {method_name} visualization complete!")
+    return plt.gcf()
