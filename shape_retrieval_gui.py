@@ -12,18 +12,28 @@ from tkinter import filedialog, messagebox, ttk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from pathlib import Path
-import os
+import time
+
+# Add these imports after your existing imports
+from knn_engine import KNNEngine
+from dimensionality_reduction import DimensionalityReducer
+import threading
 
 class ShapeRetrievalGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("3D Shape Retrieval Tool")
-        self.root.geometry("1000x700")  # INCREASED from 800x600
+        self.root.title("3D Shape Retrieval Tool - Step 4 & 5")  # Updated title
+        self.root.geometry("1200x700")  # Increased width for new controls
         
-        # Data storage
+        # Data storage (existing)
         self.features_df = None
         self.feature_columns = None
         self.current_results = None
+        
+        # NEW: Step 5 components
+        self.knn_engine = None
+        self.dimensionality_reducer = None
+        self.step5_initialized = False
         
         # Create GUI layout
         self.create_widgets()
@@ -135,6 +145,57 @@ class ShapeRetrievalGUI:
         
         self.results_text.pack(side=LEFT, fill=BOTH, expand=True)
         scrollbar.pack(side=RIGHT, fill=Y)
+        
+        # NEW: Step 5 Controls Frame
+        step5_frame = Frame(main_frame)
+        step5_frame.pack(fill=X, pady=(5, 10))
+
+        # Step 5 section label
+        step5_label = Label(step5_frame, text="Step 5 - Fast KNN Search & t-SNE Visualization:", 
+                           font=("Arial", 10, "bold"), fg="darkblue")
+        step5_label.pack(anchor=W, pady=(0, 5))
+
+        # Step 5 controls sub-frame
+        step5_controls = Frame(step5_frame)
+        step5_controls.pack(fill=X)
+
+        # K-value selection
+        Label(step5_controls, text="K neighbors:", font=("Arial", 9)).pack(side=LEFT)
+        self.k_var = StringVar(value="10")
+        k_spinbox = Spinbox(step5_controls, from_=1, to=50, textvariable=self.k_var, 
+                           width=5, font=("Arial", 9))
+        k_spinbox.pack(side=LEFT, padx=(5, 15))
+
+        # Radius selection for range search
+        Label(step5_controls, text="Radius:", font=("Arial", 9)).pack(side=LEFT)
+        self.radius_var = StringVar(value="2.0")
+        radius_entry = Entry(step5_controls, textvariable=self.radius_var, 
+                            width=8, font=("Arial", 9))
+        radius_entry.pack(side=LEFT, padx=(5, 15))
+
+        # Search type selection
+        Label(step5_controls, text="Search:", font=("Arial", 9)).pack(side=LEFT)
+        self.search_type_var = StringVar(value="knn")
+        search_type_menu = ttk.Combobox(step5_controls, textvariable=self.search_type_var,
+                                       values=["knn", "range"], state="readonly", width=8)
+        search_type_menu.pack(side=LEFT, padx=(5, 15))
+
+        # Step 5 action buttons
+        knn_btn = Button(step5_controls, text="KNN Search", command=self.knn_search, 
+                        bg="lightgreen", font=("Arial", 9, "bold"))
+        knn_btn.pack(side=LEFT, padx=5)
+
+        tsne_btn = Button(step5_controls, text="Show t-SNE Plot", command=self.show_tsne, 
+                         bg="lightblue", font=("Arial", 9, "bold"))
+        tsne_btn.pack(side=LEFT, padx=5)
+
+        compare_btn = Button(step5_controls, text="Compare Methods", command=self.compare_methods, 
+                            bg="lightyellow", font=("Arial", 9, "bold"))
+        compare_btn.pack(side=LEFT, padx=5)
+
+        # Performance info label
+        self.performance_label = Label(step5_frame, text="", fg="darkgreen", font=("Arial", 8))
+        self.performance_label.pack(anchor=W, pady=(2, 0))
     
     def auto_load_default_data(self):
         """Try to automatically load the default features database"""
@@ -561,14 +622,30 @@ FEATURE COLUMNS:
             return None
         
         try:
-            distance_method = self.distance_var.get()
+            distance_method = self.distance_var.get();
             
-            if distance_method == "advanced_combined":
-                # Already in correct format from advanced method
-                # Just need to reconstruct DataFrame
+            # Check if this is from KNN search
+            if self.current_results and 'method' in self.current_results[0] and 'knn' in self.current_results[0]['method']:
+                # KNN results - convert to expected format
                 data = []
                 for result in self.current_results:
-                    # Find the original row to get all required columns
+                    # Find the original row to get filepath
+                    orig_row = self.features_df[self.features_df['filename'] == result['filename']].iloc[0]
+                    
+                    data.append({
+                        'database_index': result['index'],
+                        'filename': result['filename'],
+                        'filepath': orig_row['filepath'],
+                        'category': result['category'],
+                        'combined_distance': result['distance'],
+                        'scalar_distance': result['distance'],  # KNN uses Euclidean distance
+                        'histogram_distance': 0.0  # KNN doesn't separate histogram
+                    })
+        
+            elif distance_method == "advanced_combined":
+                # Existing advanced method code...
+                data = []
+                for result in self.current_results:
                     orig_row = self.features_df[self.features_df['filename'] == result['filename']].iloc[0]
                     
                     data.append({
@@ -581,10 +658,9 @@ FEATURE COLUMNS:
                         'histogram_distance': result.get('histogram_distance', 0.0)
                     })
             else:
-                # Convert simple method results to advanced format
+                # Existing simple method code...
                 data = []
                 for result in self.current_results:
-                    # Find the original row to get filepath
                     orig_row = self.features_df[self.features_df['filename'] == result['filename']].iloc[0]
                     
                     data.append({
@@ -593,10 +669,10 @@ FEATURE COLUMNS:
                         'filepath': orig_row['filepath'],
                         'category': result['category'],
                         'combined_distance': result['distance'],
-                        'scalar_distance': result['distance'],  # For simple methods, use same distance
-                        'histogram_distance': 0.0  # Simple methods don't separate histogram
+                        'scalar_distance': result['distance'],
+                        'histogram_distance': 0.0
                     })
-            
+        
             results_df = pd.DataFrame(data)
             return results_df
             
@@ -948,6 +1024,371 @@ diameter: {row.get('diameter', 'N/A'):.3f}
         except Exception as e:
             messagebox.showerror("Error", f"Failed to export results:\n{str(e)}")
             self.status_label.config(text="❌ Export failed", fg="red")
+
+    def initialize_step5_engines(self):
+        """Initialize KNN engine and dimensionality reducer"""
+        if self.step5_initialized:
+            return True
+        
+        try:
+            self.status_label.config(text="🔄 Initializing Step 5 engines...", fg="blue")
+            
+            # Initialize KNN engine
+            self.knn_engine = KNNEngine("step5_data")
+            if not self.knn_engine.load_processed_features():
+                self.status_label.config(text="❌ Failed to load KNN features", fg="red")
+                return False
+            
+            if not self.knn_engine.build_index(n_neighbors=50, metric='euclidean'):
+                self.status_label.config(text="❌ Failed to build KNN index", fg="red")
+                return False
+            
+            # Initialize dimensionality reducer
+            self.dimensionality_reducer = DimensionalityReducer("step5_data")
+            if not self.dimensionality_reducer.load_processed_features():
+                self.status_label.config(text="❌ Failed to load DR features", fg="red")
+                return False
+            
+            self.step5_initialized = True
+            self.performance_label.config(text="✅ Step 5 engines ready - KNN index built with 2006 shapes")
+            return True
+            
+        except Exception as e:
+            self.status_label.config(text=f"❌ Step 5 initialization failed", fg="red")
+            print(f"Step 5 initialization error: {e}")
+            return False
+
+    def knn_search(self):
+        """Perform KNN search using Step 5 engine"""
+        if self.features_df is None:
+            messagebox.showwarning("No Data", "Please load data first!")
+            return
+        
+        if self.mesh_var.get() == "Select mesh...":
+            messagebox.showwarning("No Reference", "Please select a reference mesh!")
+            return
+        
+        # Initialize Step 5 engines if needed
+        if not self.initialize_step5_engines():
+            return
+        
+        try:
+            self.status_label.config(text="🔄 Performing KNN search...", fg="blue")
+            
+            # Get query filename and find its index in metadata
+            query_filename = self.mesh_var.get()
+            query_index = None
+            
+            for i, meta in enumerate(self.knn_engine.metadata):
+                if meta['filename'] == query_filename:
+                    query_index = i
+                    break
+            
+            if query_index is None:
+                messagebox.showerror("Error", f"Query mesh '{query_filename}' not found in KNN database!")
+                return
+            
+            # Perform search based on selected type
+            search_type = self.search_type_var.get()
+            
+            if search_type == "knn":
+                k_value = int(self.k_var.get())
+                results_df = self.knn_engine.query_knn(query_index, k=k_value)
+                search_info = f"K-NN (K={k_value})"
+            else:  # range search
+                radius_value = float(self.radius_var.get())
+                results_df = self.knn_engine.query_range(query_index, radius=radius_value)
+                search_info = f"Range (R={radius_value})"
+            
+            if results_df is None:
+                messagebox.showerror("Error", "KNN search failed!")
+                return
+            
+            # Store results for visualization
+            self.current_results = []
+            for _, row in results_df.iterrows():
+                self.current_results.append({
+                    'filename': row['filename'],
+                    'category': row['category'],
+                    'distance': row['distance'],
+                    'index': row['database_index'],
+                    'method': f'knn_{search_type}'
+                })
+            
+            # Display results
+            self._display_knn_results(results_df, search_info, query_filename)
+            
+            # Update performance info
+            query_time = results_df.iloc[0]['query_time'] if len(results_df) > 0 else 0
+            self.performance_label.config(text=f"⚡ {search_info} completed in {query_time:.4f}s - {len(results_df)} results")
+            
+            self.status_label.config(text="✅ KNN search completed successfully", fg="green")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"KNN search failed:\n{str(e)}")
+            self.status_label.config(text="❌ KNN search failed", fg="red")
+
+    def _display_knn_results(self, results_df, search_info, query_filename):
+        """Display KNN search results"""
+        mesh_info = self.get_selected_mesh_info()
+        
+        results_text = mesh_info + "\n\n"
+        results_text += "🚀 KNN SEARCH RESULTS (Step 5)\n"
+        results_text += "=" * 70 + "\n"
+        results_text += f"Search Type: {search_info}\n"
+        results_text += f"Query: {query_filename}\n"
+        results_text += f"Results Found: {len(results_df)}\n"
+        
+        if len(results_df) > 0:
+            query_time = results_df.iloc[0]['query_time']
+            results_text += f"Query Time: {query_time:.4f} seconds\n\n"
+        
+        results_text += f"TOP RESULTS:\n"
+        results_text += f"{'-' * 70}\n"
+        results_text += f"{'Rank':<4} {'Distance':<12} {'Category':<15} {'Filename':<25}\n"
+        results_text += f"{'-' * 70}\n"
+        
+        for _, row in results_df.head(15).iterrows():
+            results_text += f"{row['rank']:<4} {row['distance']:<12.4f} {row['category']:<15} {row['filename']:<25}\n"
+        
+        if len(results_df) > 15:
+            results_text += f"... and {len(results_df) - 15} more results\n"
+        
+        results_text += f"\n💡 Use 'View Similar' to visualize these results in 3D"
+        
+        self.results_text.delete(1.0, END)
+        self.results_text.insert(1.0, results_text)
+
+    def show_tsne(self):
+        """Show t-SNE visualization - Fixed for macOS threading"""
+        if self.features_df is None:
+            messagebox.showwarning("No Data", "Please load data first!")
+            return
+        
+        try:
+            self.status_label.config(text="🔄 Loading t-SNE visualization...", fg="blue")
+            
+            # Initialize dimensionality reducer if needed
+            if not self.initialize_step5_engines():
+                return
+            
+            # Check if embedding already exists
+            embedding_file = Path("step5_data/tsne_embedding_2d.npy")
+            
+            if not embedding_file.exists():
+                # Show loading message
+                self.status_label.config(text="🔄 Computing t-SNE embedding (this may take 1-2 minutes)...", fg="blue")
+                self.results_text.delete(1.0, END)
+                self.results_text.insert(1.0, "Computing t-SNE embedding...\nThis may take 1-2 minutes for 2006 shapes.\nPlease wait...")
+                self.root.update()  # Force GUI update
+                
+                # Compute t-SNE in main thread (blocking but safe)
+                if not self.dimensionality_reducer.compute_tsne(perplexity=30, n_iter=1000):
+                    self.status_label.config(text="❌ t-SNE computation failed", fg="red")
+                    return
+                
+                self.dimensionality_reducer.save_embedding()
+            else:
+                # Load existing embedding
+                self.dimensionality_reducer.X_2d = np.load(embedding_file)
+                print("✅ Loaded existing t-SNE embedding")
+            
+            # Create interactive plot (on main thread)
+            if not self.dimensionality_reducer.create_interactive_plot():
+                self.status_label.config(text="❌ t-SNE plot creation failed", fg="red")
+                return
+            
+            # Show the plot (on main thread)
+            self.dimensionality_reducer.show_plot()
+            
+            self.status_label.config(text="✅ t-SNE visualization opened!", fg="green")
+            self.performance_label.config(text="🎨 t-SNE plot: Hover points for details, right-click for KNN highlighting")
+            
+            # Update results text
+            # Get actual statistics from your dimensionality reducer
+            if hasattr(self.dimensionality_reducer, 'X_2d') and self.dimensionality_reducer.X_2d is not None:
+                embedding_shape = self.dimensionality_reducer.X_2d.shape
+                n_points = embedding_shape[0]
+                n_dims = embedding_shape[1]
+            else:
+                n_points = len(self.features_df) if self.features_df is not None else 0
+                n_dims = 2
+            
+            # Get actual category count
+            if self.features_df is not None:
+                n_categories = len(self.features_df['category'].unique())
+                category_counts = self.features_df['category'].value_counts()
+                top_categories = category_counts.head(5)
+            else:
+                n_categories = 0
+                top_categories = []
+            
+            # Get actual feature count
+            n_features = len(self.feature_columns) if self.feature_columns else 0
+            
+            # Build dynamic results text
+            results_text = f"""t-SNE DIMENSIONALITY REDUCTION VISUALIZATION
+======================================================
+
+🎨 Interactive 2D scatterplot opened in new window
+📊 {n_points} shapes reduced from {n_features}D to {n_dims}D using t-SNE
+🌈 Points colored by category ({n_categories} categories)
+
+CURRENT DATABASE STATISTICS:
+• Total shapes: {n_points:,}
+• Feature dimensions: {n_features}
+• Categories: {n_categories}
+• Selected mesh: {self.mesh_var.get()}
+
+TOP CATEGORIES IN DATABASE:
+"""
+    
+            # Add top categories dynamically
+            for i, (category, count) in enumerate(top_categories.items(), 1):
+                results_text += f"{i}. {category} - {count} shapes\n"
+            
+            results_text += f"""
+INTERACTION:
+• Hover over points to see shape details
+• Right-click points to highlight K nearest neighbors
+• Close window when done exploring
+
+EMBEDDING QUALITY:
+• Perplexity: 30 (controls local neighborhood size)
+• Iterations: 1000 (convergence parameter)
+• Embedding range: X[{self.dimensionality_reducer.X_2d[:, 0].min():.1f}, {self.dimensionality_reducer.X_2d[:, 0].max():.1f}], Y[{self.dimensionality_reducer.X_2d[:, 1].min():.1f}, {self.dimensionality_reducer.X_2d[:, 1].max():.1f}]
+
+💡 Well-separated clusters indicate good feature quality!
+Currently viewing: {self.mesh_var.get() if self.mesh_var.get() != "Select mesh..." else "No mesh selected"}
+"""
+    
+            self.results_text.delete(1.0, END)
+            self.results_text.insert(1.0, results_text)
+            
+        except Exception as e:
+            self.status_label.config(text="❌ t-SNE visualization failed", fg="red")
+            print(f"t-SNE error: {e}")
+            messagebox.showerror("Error", f"t-SNE visualization failed:\n{str(e)}")
+
+    def compare_methods(self):
+        """Compare Step 4 vs Step 5 methods side by side"""
+        if self.features_df is None:
+            messagebox.showwarning("No Data", "Please load data first!")
+            return
+        
+        if self.mesh_var.get() == "Select mesh...":
+            messagebox.showwarning("No Reference", "Please select a reference mesh!")
+            return
+        
+        try:
+            self.status_label.config(text="🔄 Comparing Step 4 vs Step 5 methods...", fg="blue")
+            
+            query_filename = self.mesh_var.get()
+            
+            # Step 4: Compute using your custom distance (advanced_combined)
+            old_distance_var = self.distance_var.get()
+            self.distance_var.set("advanced_combined")
+            
+            step4_start = time.time()
+            self._compute_advanced_distances()
+            step4_time = time.time() - step4_start
+            step4_results = self.current_results.copy() if self.current_results else []
+            
+            # Step 5: Compute using KNN
+            if not self.initialize_step5_engines():
+                return
+            
+            # Find query index
+            query_index = None
+            for i, meta in enumerate(self.knn_engine.metadata):
+                if meta['filename'] == query_filename:
+                    query_index = i
+                    break
+            
+            if query_index is None:
+                messagebox.showerror("Error", "Query mesh not found in KNN database!")
+                return
+            
+            step5_start = time.time()
+            knn_results_df = self.knn_engine.query_knn(query_index, k=10)
+            step5_time = time.time() - step5_start
+            
+            # Restore original distance setting
+            self.distance_var.set(old_distance_var)
+            
+            # Display comparison
+            self._display_comparison_results(step4_results, knn_results_df, step4_time, step5_time, query_filename)
+            
+            self.status_label.config(text="✅ Method comparison completed", fg="green")
+            speedup = step4_time / step5_time if step5_time > 0 else float('inf')
+            self.performance_label.config(text=f"⚡ Speedup: {speedup:.1f}x faster (Step 4: {step4_time:.3f}s vs Step 5: {step5_time:.4f}s)")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Method comparison failed:\n{str(e)}")
+            self.status_label.config(text="❌ Method comparison failed", fg="red")
+
+    def _display_comparison_results(self, step4_results, step5_results_df, step4_time, step5_time, query_filename):
+        """Display side-by-side comparison of Step 4 vs Step 5 results"""
+        results_text = f"""METHOD COMPARISON: Step 4 vs Step 5
+{'=' * 80}
+Query: {query_filename}
+Step 4 Time: {step4_time:.3f} seconds (Custom Advanced Distance)
+Step 5 Time: {step5_time:.4f} seconds (KNN Euclidean Distance)
+Speedup: {step4_time/step5_time:.1f}x faster with Step 5
+
+TOP 10 RESULTS COMPARISON:
+{'=' * 80}
+{'Rank':<4} {'Step 4 (Advanced)':<35} {'Step 5 (KNN)':<35}
+{'    ':<4} {'Distance':<12} {'Category':<15} {'Distance':<12} {'Category':<15}
+{'-' * 80}
+"""
+        
+        # Compare top 10 results
+        for i in range(min(10, len(step4_results), len(step5_results_df))):
+            step4_result = step4_results[i] if i < len(step4_results) else None
+            step5_row = step5_results_df.iloc[i] if i < len(step5_results_df) else None
+            
+            rank = i + 1
+            
+            if step4_result:
+                step4_dist = f"{step4_result['distance']:.4f}"
+                step4_cat = step4_result['category'][:13]  # Truncate long categories
+            else:
+                step4_dist = "N/A"
+                step4_cat = "N/A"
+            
+            if step5_row is not None:
+                step5_dist = f"{step5_row['distance']:.4f}"
+                step5_cat = step5_row['category'][:13]
+            else:
+                step5_dist = "N/A"
+                step5_cat = "N/A"
+            
+            results_text += f"{rank:<4} {step4_dist:<12} {step4_cat:<15} {step5_dist:<12} {step5_cat:<15}\n"
+        
+        results_text += f"\nASSESSMENT:\n"
+        results_text += f"{'-' * 40}\n"
+        
+        # Simple overlap analysis
+        if step4_results and len(step5_results_df) > 0:
+            step4_filenames = {r['filename'] for r in step4_results[:10]}
+            step5_filenames = set(step5_results_df.head(10)['filename'])
+            overlap = len(step4_filenames.intersection(step5_filenames))
+            
+            results_text += f"Top 10 Result Overlap: {overlap}/10 shapes in common\n"
+            results_text += f"Performance Gain: {step4_time/step5_time:.1f}x faster with KNN\n"
+            
+            if overlap >= 7:
+                results_text += "✅ High similarity: Methods agree well on shape similarity\n"
+            elif overlap >= 4:
+                results_text += "⚠️  Moderate similarity: Some differences in ranking\n"
+            else:
+                results_text += "❌ Low similarity: Significant differences between methods\n"
+        
+        results_text += f"\n💡 Use 'View Similar' to visualize results from either method"
+        
+        self.results_text.delete(1.0, END)
+        self.results_text.insert(1.0, results_text)
 
 
 # Add this at the very end of your shape_retrieval_gui.py file:

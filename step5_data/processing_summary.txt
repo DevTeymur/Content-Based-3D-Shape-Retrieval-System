@@ -1,0 +1,9 @@
+STEP 5 FEATURE PREPARATION SUMMARY
+==================================================
+
+n_shapes: 2006
+n_total_features: 57
+n_scalar_features: 7
+n_histogram_features: 50
+final_matrix_shape: (2006, 57)
+data_files: {'features': 'step5_data/features_normalized.npy', 'labels': 'step5_data/labels.npy', 'metadata': 'step5_data/metadata.pkl', 'feature_info': 'step5_data/feature_info.pkl'}
