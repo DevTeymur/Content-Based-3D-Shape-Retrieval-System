@@ -151,6 +151,30 @@ class DimensionalityReducer:
         
         print(f"✅ Created color mapping for {len(self.category_colors)} categories")
     
+    def create_colorbrewer_palette(self, n_categories):
+        """
+        Create ColorBrewer-inspired palette for categorical data
+        Following Step 6 guidelines for distinguishable colors
+        """
+        import matplotlib.cm as cm
+        import matplotlib.colors as mcolors
+        
+        if n_categories <= 12:
+            # Use qualitative Set3 for small number of categories
+            colors = cm.Set3(np.linspace(0, 1, min(n_categories, 12)))
+        elif n_categories <= 20:
+            # Use tab20 for medium number
+            colors = cm.tab20(np.linspace(0, 1, min(n_categories, 20)))
+        else:
+            # For many categories, use hsv with maximum separation
+            colors = cm.hsv(np.linspace(0, 1, n_categories, endpoint=False))
+        
+        # Convert to hex for consistency
+        hex_colors = [mcolors.to_hex(color) for color in colors]
+        
+        print(f"🎨 Generated {len(hex_colors)} distinguishable colors using ColorBrewer principles")
+        return hex_colors
+    
     def create_interactive_plot(self, figsize=(12, 10), point_size=20, alpha=0.7):
         """
         Create interactive scatterplot with category coloring
@@ -430,6 +454,95 @@ class DimensionalityReducer:
             print(f"{i+1:2d}. {category:20s} - {stats['n_shapes']:3d} shapes, "
                   f"avg dist: {stats['avg_intra_distance']:.2f} ± {stats['std_intra_distance']:.2f}")
     
+    def analyze_clustering_quality(self):
+        """
+        Analyze t-SNE clustering quality following Step 6 guidelines
+        """
+        if self.X_2d is None:
+            print("❌ No t-SNE embedding available")
+            return None
+        
+        from scipy.spatial.distance import pdist, squareform
+        from scipy.stats import silhouette_score
+        
+        print("\n🎨 t-SNE CLUSTERING QUALITY ANALYSIS")
+        print("=" * 60)
+        
+        # Compute silhouette score (measures cluster quality)
+        try:
+            silhouette_avg = silhouette_score(self.X_2d, self.labels)
+            print(f"📊 Overall Silhouette Score: {silhouette_avg:.3f}")
+            print(f"   (Range: -1 to 1, higher = better separated clusters)")
+        except:
+            print("⚠️  Could not compute silhouette score")
+        
+        # Analyze intra-class vs inter-class distances
+        unique_categories = list(set(self.labels))
+        category_analysis = {}
+        
+        for category in unique_categories:
+            # Get points for this category
+            category_mask = np.array(self.labels) == category
+            category_points = self.X_2d[category_mask]
+            
+            if len(category_points) > 1:
+                # Intra-class distances (within category)
+                intra_distances = pdist(category_points)
+                avg_intra_distance = np.mean(intra_distances)
+                
+                # Inter-class distances (to other categories)
+                other_points = self.X_2d[~category_mask]
+                if len(other_points) > 0:
+                    # Sample for efficiency
+                    sample_size = min(100, len(other_points))
+                    other_sample = other_points[np.random.choice(len(other_points), sample_size, replace=False)]
+                    
+                    inter_distances = []
+                    for cat_point in category_points:
+                        distances_to_others = np.linalg.norm(other_sample - cat_point, axis=1)
+                        inter_distances.extend(distances_to_others)
+                    
+                    avg_inter_distance = np.mean(inter_distances)
+                    separation_ratio = avg_inter_distance / avg_intra_distance
+                    
+                    category_analysis[category] = {
+                        'count': len(category_points),
+                        'avg_intra_distance': avg_intra_distance,
+                        'avg_inter_distance': avg_inter_distance,
+                        'separation_ratio': separation_ratio
+                    }
+        
+        # Sort by separation ratio (higher = better separated)
+        sorted_analysis = sorted(category_analysis.items(), 
+                             key=lambda x: x[1]['separation_ratio'], reverse=True)
+        
+        print(f"\n🏆 BEST SEPARATED CATEGORIES (High Separation Ratio):")
+        print(f"{'Category':<20} {'Count':<6} {'Intra':<8} {'Inter':<8} {'Ratio':<8}")
+        print("-" * 60)
+        
+        for category, metrics in sorted_analysis[:10]:
+            print(f"{category:<20} {metrics['count']:<6} "
+                  f"{metrics['avg_intra_distance']:<8.3f} {metrics['avg_inter_distance']:<8.3f} "
+                  f"{metrics['separation_ratio']:<8.2f}")
+        
+        print(f"\n💔 CHALLENGING CATEGORIES (Low Separation Ratio):")
+        print(f"{'Category':<20} {'Count':<6} {'Intra':<8} {'Inter':<8} {'Ratio':<8}")
+        print("-" * 60)
+        
+        for category, metrics in sorted_analysis[-5:]:
+            print(f"{category:<20} {metrics['count']:<6} "
+                  f"{metrics['avg_intra_distance']:<8.3f} {metrics['avg_inter_distance']:<8.3f} "
+                  f"{metrics['separation_ratio']:<8.2f}")
+        
+        print(f"\n💡 INTERPRETATION GUIDE:")
+        print(f"• High separation ratio (>2.0): Dense, well-separated clusters")
+        print(f"  → Query shapes from these categories should return same-class results")
+        print(f"• Low separation ratio (<1.5): Overlapping or mixed regions") 
+        print(f"  → Query shapes from these categories may return mixed-class results")
+        print(f"• Categories with few shapes may have unreliable ratios")
+        
+        return category_analysis
+    
     def get_statistics(self):
         """Get comprehensive statistics about the embedding"""
         if self.X_2d is None:
@@ -449,6 +562,79 @@ class DimensionalityReducer:
         }
         
         return stats
+
+    def create_interactive_plot_enhanced(self):
+        """Enhanced interactive plot with better colors and interpretation guides"""
+        if self.X_2d is None:
+            print("❌ No 2D embedding available")
+            return False
+        
+        try:
+            import plotly.express as px
+            import plotly.graph_objects as go
+            
+            # Create DataFrame for plotting
+            df_plot = pd.DataFrame({
+                'x': self.X_2d[:, 0],
+                'y': self.X_2d[:, 1],
+                'category': self.labels,
+                'filename': [meta['filename'] for meta in self.metadata],
+                'index': range(len(self.X_2d))
+            })
+            
+            # Create enhanced color mapping
+            unique_categories = sorted(df_plot['category'].unique())
+            enhanced_colors = self.create_colorbrewer_palette(len(unique_categories))
+            color_map = dict(zip(unique_categories, enhanced_colors))
+            
+            # Create the plot with enhanced styling
+            fig = px.scatter(
+                df_plot, x='x', y='y', 
+                color='category',
+                color_discrete_map=color_map,
+                hover_data=['filename', 'index'],
+                title=f"t-SNE Visualization: {len(self.metadata)} Shapes in {len(unique_categories)} Categories",
+                labels={'x': 't-SNE Dimension 1', 'y': 't-SNE Dimension 2'},
+                width=1000, height=700
+            )
+            
+            # Enhanced styling
+            fig.update_traces(marker=dict(size=8, opacity=0.7, line=dict(width=0.5, color='white')))
+            fig.update_layout(
+                title_font_size=16,
+                legend_title_text="Categories",
+                legend=dict(
+                    orientation="v",
+                    yanchor="top",
+                    y=1,
+                    xanchor="left",
+                    x=1.01,
+                    font=dict(size=10)
+                ),
+                margin=dict(r=200)  # Make room for legend
+            )
+            
+            # Add interpretation annotations
+            fig.add_annotation(
+                text="💡 Dense same-color clusters = good intra-class similarity<br>" +
+                     "🔍 Mixed-color regions = classes hard to separate<br>" +
+                     "📊 Well-separated clusters = distinct categories",
+                xref="paper", yref="paper",
+                x=0.02, y=0.98, xanchor='left', yanchor='top',
+                showarrow=False,
+                font=dict(size=10, color="darkblue"),
+                bgcolor="rgba(255,255,255,0.8)",
+                bordercolor="gray",
+                borderwidth=1
+            )
+            
+            self.fig = fig
+            print("✅ Enhanced interactive plot created with ColorBrewer-inspired colors!")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Failed to create enhanced plot: {e}")
+            return False
 
 def main():
     """Main function to test dimensionality reduction"""

@@ -13,10 +13,13 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from pathlib import Path
 import time
+import json
 
 # Add these imports after your existing imports
 from knn_engine import KNNEngine
 from dimensionality_reduction import DimensionalityReducer
+from cbsr_evaluator import CBSREvaluator
+from step6_analysis import Step6Analyzer
 import threading
 
 class ShapeRetrievalGUI:
@@ -705,7 +708,7 @@ FEATURE COLUMNS:
         
         self.results_text.delete(1.0, END)
         self.results_text.insert(1.0, results_text)
-
+    
     def show_mesh_info(self):
         """Display current mesh information and all its features"""
         if self.features_df is None:
@@ -1442,9 +1445,373 @@ TOP 10 RESULTS COMPARISON:
         self.results_text.delete(1.0, END)
         self.results_text.insert(1.0, results_text)
 
+    def create_step6_frame(self):
+        """Create Step 6 evaluation interface"""
+        step6_frame = Frame(self.notebook)
+        self.notebook.add(step6_frame, text="📊 Step 6: Evaluation")
+        
+        # Title
+        title_label = Label(step6_frame, text="Step 6: CBSR System Evaluation", 
+                           font=("Arial", 16, "bold"), fg="darkblue")
+        title_label.pack(pady=10)
+        
+        # Description
+        desc_text = """Evaluate Content-Based Shape Retrieval system using Precision@K and Recall metrics.
+Tests system performance across all categories and generates comprehensive analysis."""
+        desc_label = Label(step6_frame, text=desc_text, font=("Arial", 10), 
+                          wraplength=600, justify="center")
+        desc_label.pack(pady=5)
+        
+        # Evaluation parameters frame
+        params_frame = Frame(step6_frame, relief="ridge", bd=2)
+        params_frame.pack(pady=10, padx=20, fill="x")
+        
+        Label(params_frame, text="Evaluation Parameters", font=("Arial", 12, "bold")).pack(pady=5)
+        
+        # Number of queries
+        query_frame = Frame(params_frame)
+        query_frame.pack(pady=5)
+        Label(query_frame, text="Number of test queries:").pack(side=LEFT, padx=5)
+        self.eval_queries_var = StringVar(value="200")
+        query_entry = Entry(query_frame, textvariable=self.eval_queries_var, width=10)
+        query_entry.pack(side=LEFT, padx=5)
+        Label(query_frame, text="(max 2006)").pack(side=LEFT, padx=5)
+        
+        # K values
+        k_frame = Frame(params_frame)
+        k_frame.pack(pady=5)
+        Label(k_frame, text="K values to evaluate:").pack(side=LEFT, padx=5)
+        self.eval_k_var = StringVar(value="1,5,10")
+        k_entry = Entry(k_frame, textvariable=self.eval_k_var, width=15)
+        k_entry.pack(side=LEFT, padx=5)
+        Label(k_frame, text="(comma-separated)").pack(side=LEFT, padx=5)
+        
+        # Buttons frame
+        buttons_frame = Frame(step6_frame)
+        buttons_frame.pack(pady=20)
+        
+        # Quick evaluation button
+        quick_btn = Button(buttons_frame, text="🚀 Quick Evaluation (50 queries)", 
+                          command=self.run_quick_evaluation,
+                          bg="lightgreen", font=("Arial", 11, "bold"), 
+                          width=25, height=2)
+        quick_btn.pack(side=LEFT, padx=10)
+        
+        # Full evaluation button
+        full_btn = Button(buttons_frame, text="📊 Full Evaluation", 
+                         command=self.run_full_evaluation,
+                         bg="lightblue", font=("Arial", 11, "bold"), 
+                         width=20, height=2)
+        full_btn.pack(side=LEFT, padx=10)
+        
+        # View results button
+        view_btn = Button(buttons_frame, text="📈 View Last Results", 
+                         command=self.view_evaluation_results,
+                         bg="lightyellow", font=("Arial", 11, "bold"), 
+                         width=20, height=2)
+        view_btn.pack(side=LEFT, padx=10)
+        
+        # Add this button to your Step 6 GUI frame
+        tech_btn = Button(buttons_frame, text="📋 Technical Analysis", 
+                         command=self.run_technical_analysis,
+                         bg="lightcyan", font=("Arial", 11, "bold"), 
+                         width=20, height=2)
+        tech_btn.pack(side=LEFT, padx=10)
+        
+        # Results display area
+        results_frame = Frame(step6_frame, relief="sunken", bd=2)
+        results_frame.pack(pady=10, padx=20, fill="both", expand=True)
+        
+        Label(results_frame, text="Evaluation Results", font=("Arial", 12, "bold")).pack(pady=5)
+        
+        # Create text widget with scrollbar for results
+        text_frame = Frame(results_frame)
+        text_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        
+        self.eval_results_text = Text(text_frame, height=15, wrap=WORD, font=("Courier", 10))
+        eval_scrollbar = Scrollbar(text_frame, orient="vertical", command=self.eval_results_text.yview)
+        self.eval_results_text.configure(yscrollcommand=eval_scrollbar.set)
+        
+        self.eval_results_text.pack(side="left", fill="both", expand=True)
+        eval_scrollbar.pack(side="right", fill="y")
+        
+        # Initialize with welcome message
+        welcome_msg = """Welcome to Step 6 CBSR Evaluation!
+
+This module evaluates your Content-Based Shape Retrieval system using:
+• Precision@K: Relevance of top-K results  
+• Recall@K: Coverage of relevant items found
+
+QUICK START:
+1. Click "Quick Evaluation" for fast testing (50 queries)
+2. Click "Full Evaluation" for comprehensive analysis (200+ queries)
+3. Click "View Last Results" to see previous evaluation data
+
+Results include:
+✓ Overall system performance metrics
+✓ Category-wise analysis (best/worst performing)
+✓ Statistical distributions and visualizations
+✓ Comparative analysis with baseline methods
+
+Ready to evaluate your CBSR system!"""
+        
+        self.eval_results_text.insert(1.0, welcome_msg)
+        self.eval_results_text.config(state=DISABLED)
+    
+    def run_quick_evaluation(self):
+        """Run quick evaluation with 50 queries"""
+        try:
+            self.status_label.config(text="🔄 Running quick evaluation...", fg="blue")
+            self.eval_results_text.config(state=NORMAL)
+            self.eval_results_text.delete(1.0, END)
+            self.eval_results_text.insert(1.0, "🚀 Starting quick evaluation...\n\n")
+            self.eval_results_text.config(state=DISABLED)
+            self.root.update()
+            
+            # Parse parameters
+            try:
+                max_queries = 50  # Fixed for quick evaluation
+                k_values = [int(k.strip()) for k in self.eval_k_var.get().split(',')]
+            except ValueError:
+                messagebox.showerror("Error", "Invalid K values. Use comma-separated integers (e.g., 1,5,10)")
+                return
+            
+            # Run evaluation
+            evaluator = CBSREvaluator("step5_data")
+            
+            if not evaluator.initialize():
+                messagebox.showerror("Error", "Failed to initialize evaluator. Check Step 5 data.")
+                return
+            
+            # Update progress
+            self.eval_results_text.config(state=NORMAL)
+            self.eval_results_text.insert(END, f"📊 Evaluating {max_queries} random queries...\n")
+            self.eval_results_text.insert(END, f"📈 K values: {k_values}\n\n")
+            self.eval_results_text.config(state=DISABLED)
+            self.root.update()
+            
+            # Run evaluation
+            results = evaluator.evaluate_subset(max_queries=max_queries, k_values=k_values)
+            
+            if not results:
+                messagebox.showerror("Error", "Evaluation failed")
+                return
+            
+            # Compute summary
+            summary = evaluator.compute_summary_statistics()
+            
+            # Display results
+            self._display_evaluation_results(results, summary, "Quick")
+            
+            self.status_label.config(text="✅ Quick evaluation completed!", fg="green")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Quick evaluation failed:\n{str(e)}")
+            self.status_label.config(text="❌ Quick evaluation failed", fg="red")
+    
+    def run_full_evaluation(self):
+        """Run comprehensive evaluation"""
+        try:
+            # Get confirmation for long operation
+            if not messagebox.askyesno("Confirm", 
+                "Full evaluation may take 1-2 minutes. Continue?"):
+                return
+            
+            self.status_label.config(text="🔄 Running full evaluation...", fg="blue")
+            self.eval_results_text.config(state=NORMAL)
+            self.eval_results_text.delete(1.0, END)
+            self.eval_results_text.insert(1.0, "📊 Starting comprehensive evaluation...\n\n")
+            self.eval_results_text.config(state=DISABLED)
+            self.root.update()
+            
+            # Parse parameters
+            try:
+                max_queries = int(self.eval_queries_var.get())
+                k_values = [int(k.strip()) for k in self.eval_k_var.get().split(',')]
+                
+                if max_queries > 2006:
+                    max_queries = 2006
+                    self.eval_queries_var.set("2006")
+                    
+            except ValueError:
+                messagebox.showerror("Error", "Invalid parameters. Check number of queries and K values.")
+                return
+            
+            # Run analysis
+            analyzer = Step6Analyzer("step5_data")
+            
+            # Update progress
+            self.eval_results_text.config(state=NORMAL)
+            self.eval_results_text.insert(END, f"🔄 Initializing evaluation engine...\n")
+            self.eval_results_text.config(state=DISABLED)
+            self.root.update()
+            
+            if analyzer.run_full_evaluation(max_queries=max_queries, k_values=k_values):
+                
+                # Generate comprehensive analysis
+                self.eval_results_text.config(state=NORMAL)
+                self.eval_results_text.insert(END, f"📈 Generating plots and analysis...\n")
+                self.eval_results_text.config(state=DISABLED)
+                self.root.update()
+                
+                # Create plots (this might show popup windows)
+                analyzer.plot_performance_distribution(k=10)
+                analyzer.plot_category_performance(k=10, metric='precision', top_n=15)
+                
+                # Display results
+                self._display_evaluation_results(analyzer.results, analyzer.summary, "Full")
+                
+                self.status_label.config(text="✅ Full evaluation completed!", fg="green")
+                self.performance_label.config(text="📁 Check step5_data/step6_results/ for saved plots")
+                
+            else:
+                messagebox.showerror("Error", "Full evaluation failed")
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"Full evaluation failed:\n{str(e)}")
+            self.status_label.config(text="❌ Full evaluation failed", fg="red")
+    
+    def run_technical_analysis(self):
+        """Run detailed technical analysis following Step 6 guidelines"""
+        try:
+            analyzer = Step6Analyzer("step5_data")
+            if analyzer.evaluator.evaluation_results:
+                # Load existing results if available
+                results_dir = Path("step5_data/step6_results")
+                if (results_dir / "evaluation_results.json").exists():
+                    with open(results_dir / "evaluation_results.json", 'r') as f:
+                        analyzer.results = json.load(f)
+                    with open(results_dir / "summary_statistics.json", 'r') as f:
+                        analyzer.summary = json.load(f)
+                
+                    # Run technical analysis
+                    analyzer.generate_technical_report()
+                    self.status_label.config(text="✅ Technical analysis completed - check console", fg="green")
+                else:
+                    messagebox.showinfo("No Data", "Please run an evaluation first!")
+            else:
+                messagebox.showinfo("No Data", "Please run an evaluation first!")
+        except Exception as e:
+            messagebox.showerror("Error", f"Technical analysis failed:\n{str(e)}")
+    
+    def _display_evaluation_results(self, results, summary, eval_type=""):
+        """Display evaluation results in the text widget"""
+        
+        self.eval_results_text.config(state=NORMAL)
+        self.eval_results_text.delete(1.0, END)
+        
+        # Header
+        results_text = f"""{eval_type.upper()} CBSR EVALUATION RESULTS
+{'=' * 80}
+
+SYSTEM PERFORMANCE SUMMARY:
+"""
+        
+        # Overall metrics
+        for k in [1, 5, 10]:
+            if f'overall_precision@{k}' in summary:
+                precision = summary[f'overall_precision@{k}']['mean']
+                recall = summary[f'overall_recall@{k}']['mean']
+                precision_std = summary[f'overall_precision@{k}']['std']
+                recall_std = summary[f'overall_recall@{k}']['std']
+                
+                results_text += f"""
+📊 K={k} Results:
+   Precision@{k}: {precision:.3f} ± {precision_std:.3f}
+   Recall@{k}: {recall:.3f} ± {recall_std:.3f}"""
+        
+        # Key insights
+        if 'overall_precision@1' in summary and 'overall_precision@10' in summary:
+            precision_1 = summary['overall_precision@1']['mean']
+            precision_10 = summary['overall_precision@10']['mean']
+            num_queries = results['metadata']['num_queries']
+            
+            results_text += f"""
+
+💡 KEY INSIGHTS:
+• Perfect top-1 accuracy: {precision_1:.1%}
+• Top-10 relevance: {precision_10:.1%}  
+• System efficiency: {precision_10/0.014:.0f}x better than random
+• Queries evaluated: {num_queries}
+• Total database: 2006 shapes in 69 categories
+
+"""
+        
+        # Top performing categories
+        if 'category_summary' in summary:
+            results_text += "🏆 TOP PERFORMING CATEGORIES (Precision@10):\n"
+            results_text += "-" * 50 + "\n"
+            
+            # Sort categories by precision@10
+            category_performance = []
+            for category, stats in summary['category_summary'].items():
+                if 'precision@10' in stats:
+                    category_performance.append((
+                        category, 
+                        stats['precision@10']['mean'],
+                        stats['precision@10']['count']
+                    ))
+            
+            category_performance.sort(key=lambda x: x[1], reverse=True)
+            
+            # Show top 10
+            for i, (category, precision, count) in enumerate(category_performance[:10]):
+                results_text += f"{i+1:2d}. {category:<20} {precision:.3f} ({count} queries)\n"
+            
+            # Show bottom 5
+            results_text += "\n💔 CHALLENGING CATEGORIES:\n"
+            results_text += "-" * 30 + "\n"
+            for category, precision, count in category_performance[-5:]:
+                results_text += f"    {category:<20} {precision:.3f} ({count} queries)\n"
+        
+        results_text += f"""
+
+📈 ANALYSIS COMPLETE:
+• Use "View Last Results" to see this data again
+• Check step5_data/step6_results/ for detailed plots
+• Generated evaluation plots show distributions and category analysis
+
+🎯 NEXT STEPS:
+• Investigate low-performing categories
+• Consider feature engineering improvements  
+• Compare with other similarity metrics
+• Analyze geometric similarities between confused categories
+
+{'=' * 80}"""
+        
+        self.eval_results_text.insert(1.0, results_text)
+        self.eval_results_text.config(state=DISABLED)
+    
+    def view_evaluation_results(self):
+        """View last evaluation results from saved files"""
+        try:
+            results_dir = Path("step5_data/step6_results")
+            
+            if not results_dir.exists():
+                messagebox.showinfo("No Results", "No evaluation results found. Run an evaluation first.")
+                return
+            
+            # Try to load saved results
+            results_file = results_dir / "evaluation_results.json"
+            summary_file = results_dir / "summary_statistics.json"
+            
+            if results_file.exists() and summary_file.exists():
+                with open(results_file, 'r') as f:
+                    results = json.load(f)
+                with open(summary_file, 'r') as f:
+                    summary = json.load(f)
+                
+                self._display_evaluation_results(results, summary, "Saved")
+                self.status_label.config(text="✅ Loaded saved evaluation results", fg="green")
+                
+            else:
+                messagebox.showinfo("No Results", "No saved evaluation results found. Run an evaluation first.")
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load results:\n{str(e)}")
+
 
 def main():
-    """Main function to run the GUI application"""
     root = Tk()
     app = ShapeRetrievalGUI(root)
     root.mainloop()

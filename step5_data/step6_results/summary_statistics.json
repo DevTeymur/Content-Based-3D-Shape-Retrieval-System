@@ -1,0 +1,1626 @@
+{
+  "overall_precision@1": {
+    "mean": 1.0,
+    "std": 0.0,
+    "min": 1.0,
+    "max": 1.0
+  },
+  "overall_recall@1": {
+    "mean": 0.03458751730477872,
+    "std": 0.025593776953165764,
+    "min": 0.0072992700729927005,
+    "max": 0.16666666666666666
+  },
+  "overall_precision@5": {
+    "mean": 0.43800000000000006,
+    "std": 0.25329034723020927,
+    "min": 0.2,
+    "max": 1.0
+  },
+  "overall_recall@5": {
+    "mean": 0.06662471912171813,
+    "std": 0.05816828650801915,
+    "min": 0.0072992700729927005,
+    "max": 0.5555555555555556
+  },
+  "overall_precision@10": {
+    "mean": 0.311,
+    "std": 0.21442714380413685,
+    "min": 0.1,
+    "max": 0.9
+  },
+  "overall_recall@10": {
+    "mean": 0.08752882181049274,
+    "std": 0.07018539962999486,
+    "min": 0.0072992700729927005,
+    "max": 0.5555555555555556
+  },
+  "category_summary": {
+    "Knife": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 2
+      },
+      "recall@1": {
+        "mean": 0.125,
+        "count": 2
+      },
+      "precision@5": {
+        "mean": 0.30000000000000004,
+        "count": 2
+      },
+      "recall@5": {
+        "mean": 0.1875,
+        "count": 2
+      },
+      "precision@10": {
+        "mean": 0.15000000000000002,
+        "count": 2
+      },
+      "recall@10": {
+        "mean": 0.1875,
+        "count": 2
+      }
+    },
+    "Jet": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 15
+      },
+      "recall@1": {
+        "mean": 0.011627906976744182,
+        "count": 15
+      },
+      "precision@5": {
+        "mean": 0.5333333333333333,
+        "count": 15
+      },
+      "recall@5": {
+        "mean": 0.031007751937984496,
+        "count": 15
+      },
+      "precision@10": {
+        "mean": 0.4933333333333333,
+        "count": 15
+      },
+      "recall@10": {
+        "mean": 0.05736434108527132,
+        "count": 15
+      }
+    },
+    "City": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 2
+      },
+      "recall@1": {
+        "mean": 0.038461538461538464,
+        "count": 2
+      },
+      "precision@5": {
+        "mean": 0.5,
+        "count": 2
+      },
+      "recall@5": {
+        "mean": 0.09615384615384616,
+        "count": 2
+      },
+      "precision@10": {
+        "mean": 0.25,
+        "count": 2
+      },
+      "recall@10": {
+        "mean": 0.09615384615384616,
+        "count": 2
+      }
+    },
+    "House": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 4
+      },
+      "recall@1": {
+        "mean": 0.02857142857142857,
+        "count": 4
+      },
+      "precision@5": {
+        "mean": 0.30000000000000004,
+        "count": 4
+      },
+      "recall@5": {
+        "mean": 0.04285714285714286,
+        "count": 4
+      },
+      "precision@10": {
+        "mean": 0.225,
+        "count": 4
+      },
+      "recall@10": {
+        "mean": 0.06428571428571428,
+        "count": 4
+      }
+    },
+    "Quadruped": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 5
+      },
+      "recall@1": {
+        "mean": 0.01818181818181818,
+        "count": 5
+      },
+      "precision@5": {
+        "mean": 0.64,
+        "count": 5
+      },
+      "recall@5": {
+        "mean": 0.05818181818181818,
+        "count": 5
+      },
+      "precision@10": {
+        "mean": 0.45999999999999996,
+        "count": 5
+      },
+      "recall@10": {
+        "mean": 0.08363636363636363,
+        "count": 5
+      }
+    },
+    "Humanoid": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 16
+      },
+      "recall@1": {
+        "mean": 0.0072992700729927005,
+        "count": 16
+      },
+      "precision@5": {
+        "mean": 0.625,
+        "count": 16
+      },
+      "recall@5": {
+        "mean": 0.022810218978102186,
+        "count": 16
+      },
+      "precision@10": {
+        "mean": 0.5125,
+        "count": 16
+      },
+      "recall@10": {
+        "mean": 0.03740875912408759,
+        "count": 16
+      }
+    },
+    "Starship": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 3
+      },
+      "recall@1": {
+        "mean": 0.034482758620689655,
+        "count": 3
+      },
+      "precision@5": {
+        "mean": 0.3333333333333333,
+        "count": 3
+      },
+      "recall@5": {
+        "mean": 0.0574712643678161,
+        "count": 3
+      },
+      "precision@10": {
+        "mean": 0.2333333333333333,
+        "count": 3
+      },
+      "recall@10": {
+        "mean": 0.08045977011494254,
+        "count": 3
+      }
+    },
+    "HumanHead": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 6
+      },
+      "recall@1": {
+        "mean": 0.02040816326530612,
+        "count": 6
+      },
+      "precision@5": {
+        "mean": 0.6666666666666666,
+        "count": 6
+      },
+      "recall@5": {
+        "mean": 0.06802721088435375,
+        "count": 6
+      },
+      "precision@10": {
+        "mean": 0.4833333333333332,
+        "count": 6
+      },
+      "recall@10": {
+        "mean": 0.09863945578231292,
+        "count": 6
+      }
+    },
+    "Chess": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 6
+      },
+      "recall@1": {
+        "mean": 0.024390243902439022,
+        "count": 6
+      },
+      "precision@5": {
+        "mean": 0.5,
+        "count": 6
+      },
+      "recall@5": {
+        "mean": 0.06097560975609757,
+        "count": 6
+      },
+      "precision@10": {
+        "mean": 0.3666666666666667,
+        "count": 6
+      },
+      "recall@10": {
+        "mean": 0.08943089430894309,
+        "count": 6
+      }
+    },
+    "Musical_Instrument": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 1
+      },
+      "recall@1": {
+        "mean": 0.05263157894736842,
+        "count": 1
+      },
+      "precision@5": {
+        "mean": 0.2,
+        "count": 1
+      },
+      "recall@5": {
+        "mean": 0.05263157894736842,
+        "count": 1
+      },
+      "precision@10": {
+        "mean": 0.2,
+        "count": 1
+      },
+      "recall@10": {
+        "mean": 0.10526315789473684,
+        "count": 1
+      }
+    },
+    "Apartment": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 4
+      },
+      "recall@1": {
+        "mean": 0.043478260869565216,
+        "count": 4
+      },
+      "precision@5": {
+        "mean": 0.25,
+        "count": 4
+      },
+      "recall@5": {
+        "mean": 0.05434782608695652,
+        "count": 4
+      },
+      "precision@10": {
+        "mean": 0.15,
+        "count": 4
+      },
+      "recall@10": {
+        "mean": 0.06521739130434782,
+        "count": 4
+      }
+    },
+    "Mug": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 2
+      },
+      "recall@1": {
+        "mean": 0.05,
+        "count": 2
+      },
+      "precision@5": {
+        "mean": 0.4,
+        "count": 2
+      },
+      "recall@5": {
+        "mean": 0.1,
+        "count": 2
+      },
+      "precision@10": {
+        "mean": 0.25,
+        "count": 2
+      },
+      "recall@10": {
+        "mean": 0.125,
+        "count": 2
+      }
+    },
+    "DeskPhone": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 3
+      },
+      "recall@1": {
+        "mean": 0.05000000000000001,
+        "count": 3
+      },
+      "precision@5": {
+        "mean": 0.20000000000000004,
+        "count": 3
+      },
+      "recall@5": {
+        "mean": 0.05000000000000001,
+        "count": 3
+      },
+      "precision@10": {
+        "mean": 0.13333333333333333,
+        "count": 3
+      },
+      "recall@10": {
+        "mean": 0.06666666666666667,
+        "count": 3
+      }
+    },
+    "RectangleTable": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 7
+      },
+      "recall@1": {
+        "mean": 0.02,
+        "count": 7
+      },
+      "precision@5": {
+        "mean": 0.37142857142857144,
+        "count": 7
+      },
+      "recall@5": {
+        "mean": 0.037142857142857144,
+        "count": 7
+      },
+      "precision@10": {
+        "mean": 0.22857142857142862,
+        "count": 7
+      },
+      "recall@10": {
+        "mean": 0.045714285714285714,
+        "count": 7
+      }
+    },
+    "Computer": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 3
+      },
+      "recall@1": {
+        "mean": 0.038461538461538464,
+        "count": 3
+      },
+      "precision@5": {
+        "mean": 0.5333333333333333,
+        "count": 3
+      },
+      "recall@5": {
+        "mean": 0.10256410256410257,
+        "count": 3
+      },
+      "precision@10": {
+        "mean": 0.4000000000000001,
+        "count": 3
+      },
+      "recall@10": {
+        "mean": 0.15384615384615385,
+        "count": 3
+      }
+    },
+    "AquaticAnimal": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 3
+      },
+      "recall@1": {
+        "mean": 0.05000000000000001,
+        "count": 3
+      },
+      "precision@5": {
+        "mean": 0.4666666666666666,
+        "count": 3
+      },
+      "recall@5": {
+        "mean": 0.11666666666666665,
+        "count": 3
+      },
+      "precision@10": {
+        "mean": 0.3333333333333333,
+        "count": 3
+      },
+      "recall@10": {
+        "mean": 0.16666666666666666,
+        "count": 3
+      }
+    },
+    "Fish": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 3
+      },
+      "recall@1": {
+        "mean": 0.05000000000000001,
+        "count": 3
+      },
+      "precision@5": {
+        "mean": 0.3333333333333333,
+        "count": 3
+      },
+      "recall@5": {
+        "mean": 0.08333333333333333,
+        "count": 3
+      },
+      "precision@10": {
+        "mean": 0.2333333333333333,
+        "count": 3
+      },
+      "recall@10": {
+        "mean": 0.11666666666666665,
+        "count": 3
+      }
+    },
+    "Shelf": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 4
+      },
+      "recall@1": {
+        "mean": 0.04,
+        "count": 4
+      },
+      "precision@5": {
+        "mean": 0.2,
+        "count": 4
+      },
+      "recall@5": {
+        "mean": 0.04,
+        "count": 4
+      },
+      "precision@10": {
+        "mean": 0.1,
+        "count": 4
+      },
+      "recall@10": {
+        "mean": 0.04,
+        "count": 4
+      }
+    },
+    "Bottle": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 5
+      },
+      "recall@1": {
+        "mean": 0.03333333333333333,
+        "count": 5
+      },
+      "precision@5": {
+        "mean": 0.36,
+        "count": 5
+      },
+      "recall@5": {
+        "mean": 0.06000000000000001,
+        "count": 5
+      },
+      "precision@10": {
+        "mean": 0.24000000000000005,
+        "count": 5
+      },
+      "recall@10": {
+        "mean": 0.08,
+        "count": 5
+      }
+    },
+    "Sign": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 2
+      },
+      "recall@1": {
+        "mean": 0.16666666666666666,
+        "count": 2
+      },
+      "precision@5": {
+        "mean": 0.2,
+        "count": 2
+      },
+      "recall@5": {
+        "mean": 0.16666666666666666,
+        "count": 2
+      },
+      "precision@10": {
+        "mean": 0.15000000000000002,
+        "count": 2
+      },
+      "recall@10": {
+        "mean": 0.25,
+        "count": 2
+      }
+    },
+    "Insect": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 2
+      },
+      "recall@1": {
+        "mean": 0.017543859649122806,
+        "count": 2
+      },
+      "precision@5": {
+        "mean": 0.30000000000000004,
+        "count": 2
+      },
+      "recall@5": {
+        "mean": 0.02631578947368421,
+        "count": 2
+      },
+      "precision@10": {
+        "mean": 0.15000000000000002,
+        "count": 2
+      },
+      "recall@10": {
+        "mean": 0.02631578947368421,
+        "count": 2
+      }
+    },
+    "PlantIndoors": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 6
+      },
+      "recall@1": {
+        "mean": 0.016666666666666666,
+        "count": 6
+      },
+      "precision@5": {
+        "mean": 0.39999999999999997,
+        "count": 6
+      },
+      "recall@5": {
+        "mean": 0.03333333333333333,
+        "count": 6
+      },
+      "precision@10": {
+        "mean": 0.3,
+        "count": 6
+      },
+      "recall@10": {
+        "mean": 0.049999999999999996,
+        "count": 6
+      }
+    },
+    "Bus": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 1
+      },
+      "recall@1": {
+        "mean": 0.05263157894736842,
+        "count": 1
+      },
+      "precision@5": {
+        "mean": 0.2,
+        "count": 1
+      },
+      "recall@5": {
+        "mean": 0.05263157894736842,
+        "count": 1
+      },
+      "precision@10": {
+        "mean": 0.2,
+        "count": 1
+      },
+      "recall@10": {
+        "mean": 0.10526315789473684,
+        "count": 1
+      }
+    },
+    "Biplane": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 3
+      },
+      "recall@1": {
+        "mean": 0.022727272727272724,
+        "count": 3
+      },
+      "precision@5": {
+        "mean": 0.6666666666666666,
+        "count": 3
+      },
+      "recall@5": {
+        "mean": 0.07575757575757576,
+        "count": 3
+      },
+      "precision@10": {
+        "mean": 0.5,
+        "count": 3
+      },
+      "recall@10": {
+        "mean": 0.11363636363636365,
+        "count": 3
+      }
+    },
+    "ClassicPiano": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 2
+      },
+      "recall@1": {
+        "mean": 0.05555555555555555,
+        "count": 2
+      },
+      "precision@5": {
+        "mean": 0.4,
+        "count": 2
+      },
+      "recall@5": {
+        "mean": 0.1111111111111111,
+        "count": 2
+      },
+      "precision@10": {
+        "mean": 0.2,
+        "count": 2
+      },
+      "recall@10": {
+        "mean": 0.1111111111111111,
+        "count": 2
+      }
+    },
+    "Helicopter": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 2
+      },
+      "recall@1": {
+        "mean": 0.03333333333333333,
+        "count": 2
+      },
+      "precision@5": {
+        "mean": 0.5,
+        "count": 2
+      },
+      "recall@5": {
+        "mean": 0.08333333333333334,
+        "count": 2
+      },
+      "precision@10": {
+        "mean": 0.4,
+        "count": 2
+      },
+      "recall@10": {
+        "mean": 0.13333333333333333,
+        "count": 2
+      }
+    },
+    "Car": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 10
+      },
+      "recall@1": {
+        "mean": 0.011904761904761904,
+        "count": 10
+      },
+      "precision@5": {
+        "mean": 0.56,
+        "count": 10
+      },
+      "recall@5": {
+        "mean": 0.03333333333333333,
+        "count": 10
+      },
+      "precision@10": {
+        "mean": 0.49000000000000005,
+        "count": 10
+      },
+      "recall@10": {
+        "mean": 0.05833333333333333,
+        "count": 10
+      }
+    },
+    "Gun": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 6
+      },
+      "recall@1": {
+        "mean": 0.023255813953488372,
+        "count": 6
+      },
+      "precision@5": {
+        "mean": 0.3,
+        "count": 6
+      },
+      "recall@5": {
+        "mean": 0.03488372093023256,
+        "count": 6
+      },
+      "precision@10": {
+        "mean": 0.21666666666666667,
+        "count": 6
+      },
+      "recall@10": {
+        "mean": 0.050387596899224806,
+        "count": 6
+      }
+    },
+    "ComputerKeyboard": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 1
+      },
+      "recall@1": {
+        "mean": 0.05,
+        "count": 1
+      },
+      "precision@5": {
+        "mean": 1.0,
+        "count": 1
+      },
+      "recall@5": {
+        "mean": 0.25,
+        "count": 1
+      },
+      "precision@10": {
+        "mean": 0.8,
+        "count": 1
+      },
+      "recall@10": {
+        "mean": 0.4,
+        "count": 1
+      }
+    },
+    "Rocket": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 1
+      },
+      "recall@1": {
+        "mean": 0.07692307692307693,
+        "count": 1
+      },
+      "precision@5": {
+        "mean": 0.4,
+        "count": 1
+      },
+      "recall@5": {
+        "mean": 0.15384615384615385,
+        "count": 1
+      },
+      "precision@10": {
+        "mean": 0.2,
+        "count": 1
+      },
+      "recall@10": {
+        "mean": 0.15384615384615385,
+        "count": 1
+      }
+    },
+    "NonWheelChair": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 5
+      },
+      "recall@1": {
+        "mean": 0.0196078431372549,
+        "count": 5
+      },
+      "precision@5": {
+        "mean": 0.64,
+        "count": 5
+      },
+      "recall@5": {
+        "mean": 0.06274509803921569,
+        "count": 5
+      },
+      "precision@10": {
+        "mean": 0.4,
+        "count": 5
+      },
+      "recall@10": {
+        "mean": 0.0784313725490196,
+        "count": 5
+      }
+    },
+    "Tree": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 2
+      },
+      "recall@1": {
+        "mean": 0.03125,
+        "count": 2
+      },
+      "precision@5": {
+        "mean": 0.4,
+        "count": 2
+      },
+      "recall@5": {
+        "mean": 0.0625,
+        "count": 2
+      },
+      "precision@10": {
+        "mean": 0.2,
+        "count": 2
+      },
+      "recall@10": {
+        "mean": 0.0625,
+        "count": 2
+      }
+    },
+    "Bookset": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 1
+      },
+      "recall@1": {
+        "mean": 0.1111111111111111,
+        "count": 1
+      },
+      "precision@5": {
+        "mean": 0.4,
+        "count": 1
+      },
+      "recall@5": {
+        "mean": 0.2222222222222222,
+        "count": 1
+      },
+      "precision@10": {
+        "mean": 0.2,
+        "count": 1
+      },
+      "recall@10": {
+        "mean": 0.2222222222222222,
+        "count": 1
+      }
+    },
+    "BuildingNonResidential": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 2
+      },
+      "recall@1": {
+        "mean": 0.02564102564102564,
+        "count": 2
+      },
+      "precision@5": {
+        "mean": 0.4,
+        "count": 2
+      },
+      "recall@5": {
+        "mean": 0.05128205128205128,
+        "count": 2
+      },
+      "precision@10": {
+        "mean": 0.2,
+        "count": 2
+      },
+      "recall@10": {
+        "mean": 0.05128205128205128,
+        "count": 2
+      }
+    },
+    "Cup": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 3
+      },
+      "recall@1": {
+        "mean": 0.037037037037037035,
+        "count": 3
+      },
+      "precision@5": {
+        "mean": 0.3333333333333333,
+        "count": 3
+      },
+      "recall@5": {
+        "mean": 0.06172839506172839,
+        "count": 3
+      },
+      "precision@10": {
+        "mean": 0.2333333333333333,
+        "count": 3
+      },
+      "recall@10": {
+        "mean": 0.08641975308641975,
+        "count": 3
+      }
+    },
+    "Drum": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 2
+      },
+      "recall@1": {
+        "mean": 0.058823529411764705,
+        "count": 2
+      },
+      "precision@5": {
+        "mean": 0.2,
+        "count": 2
+      },
+      "recall@5": {
+        "mean": 0.058823529411764705,
+        "count": 2
+      },
+      "precision@10": {
+        "mean": 0.1,
+        "count": 2
+      },
+      "recall@10": {
+        "mean": 0.058823529411764705,
+        "count": 2
+      }
+    },
+    "Hat": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 1
+      },
+      "recall@1": {
+        "mean": 0.09090909090909091,
+        "count": 1
+      },
+      "precision@5": {
+        "mean": 0.2,
+        "count": 1
+      },
+      "recall@5": {
+        "mean": 0.09090909090909091,
+        "count": 1
+      },
+      "precision@10": {
+        "mean": 0.2,
+        "count": 1
+      },
+      "recall@10": {
+        "mean": 0.18181818181818182,
+        "count": 1
+      }
+    },
+    "Monitor": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 4
+      },
+      "recall@1": {
+        "mean": 0.058823529411764705,
+        "count": 4
+      },
+      "precision@5": {
+        "mean": 0.2,
+        "count": 4
+      },
+      "recall@5": {
+        "mean": 0.058823529411764705,
+        "count": 4
+      },
+      "precision@10": {
+        "mean": 0.15000000000000002,
+        "count": 4
+      },
+      "recall@10": {
+        "mean": 0.08823529411764705,
+        "count": 4
+      }
+    },
+    "SubmachineGun": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 1
+      },
+      "recall@1": {
+        "mean": 0.07142857142857142,
+        "count": 1
+      },
+      "precision@5": {
+        "mean": 0.4,
+        "count": 1
+      },
+      "recall@5": {
+        "mean": 0.14285714285714285,
+        "count": 1
+      },
+      "precision@10": {
+        "mean": 0.2,
+        "count": 1
+      },
+      "recall@10": {
+        "mean": 0.14285714285714285,
+        "count": 1
+      }
+    },
+    "DeskLamp": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 3
+      },
+      "recall@1": {
+        "mean": 0.041666666666666664,
+        "count": 3
+      },
+      "precision@5": {
+        "mean": 0.46666666666666673,
+        "count": 3
+      },
+      "recall@5": {
+        "mean": 0.09722222222222222,
+        "count": 3
+      },
+      "precision@10": {
+        "mean": 0.39999999999999997,
+        "count": 3
+      },
+      "recall@10": {
+        "mean": 0.16666666666666666,
+        "count": 3
+      }
+    },
+    "Skyscraper": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 3
+      },
+      "recall@1": {
+        "mean": 0.05263157894736842,
+        "count": 3
+      },
+      "precision@5": {
+        "mean": 0.4000000000000001,
+        "count": 3
+      },
+      "recall@5": {
+        "mean": 0.10526315789473684,
+        "count": 3
+      },
+      "precision@10": {
+        "mean": 0.20000000000000004,
+        "count": 3
+      },
+      "recall@10": {
+        "mean": 0.10526315789473684,
+        "count": 3
+      }
+    },
+    "Truck": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 1
+      },
+      "recall@1": {
+        "mean": 0.037037037037037035,
+        "count": 1
+      },
+      "precision@5": {
+        "mean": 0.8,
+        "count": 1
+      },
+      "recall@5": {
+        "mean": 0.14814814814814814,
+        "count": 1
+      },
+      "precision@10": {
+        "mean": 0.5,
+        "count": 1
+      },
+      "recall@10": {
+        "mean": 0.18518518518518517,
+        "count": 1
+      }
+    },
+    "Monoplane": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 2
+      },
+      "recall@1": {
+        "mean": 0.07142857142857142,
+        "count": 2
+      },
+      "precision@5": {
+        "mean": 0.30000000000000004,
+        "count": 2
+      },
+      "recall@5": {
+        "mean": 0.10714285714285714,
+        "count": 2
+      },
+      "precision@10": {
+        "mean": 0.25,
+        "count": 2
+      },
+      "recall@10": {
+        "mean": 0.17857142857142855,
+        "count": 2
+      }
+    },
+    "FloorLamp": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 1
+      },
+      "recall@1": {
+        "mean": 0.043478260869565216,
+        "count": 1
+      },
+      "precision@5": {
+        "mean": 0.2,
+        "count": 1
+      },
+      "recall@5": {
+        "mean": 0.043478260869565216,
+        "count": 1
+      },
+      "precision@10": {
+        "mean": 0.1,
+        "count": 1
+      },
+      "recall@10": {
+        "mean": 0.043478260869565216,
+        "count": 1
+      }
+    },
+    "Bicycle": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 1
+      },
+      "recall@1": {
+        "mean": 0.043478260869565216,
+        "count": 1
+      },
+      "precision@5": {
+        "mean": 0.8,
+        "count": 1
+      },
+      "recall@5": {
+        "mean": 0.17391304347826086,
+        "count": 1
+      },
+      "precision@10": {
+        "mean": 0.4,
+        "count": 1
+      },
+      "recall@10": {
+        "mean": 0.17391304347826086,
+        "count": 1
+      }
+    },
+    "MilitaryVehicle": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 3
+      },
+      "recall@1": {
+        "mean": 0.05000000000000001,
+        "count": 3
+      },
+      "precision@5": {
+        "mean": 0.46666666666666673,
+        "count": 3
+      },
+      "recall@5": {
+        "mean": 0.11666666666666668,
+        "count": 3
+      },
+      "precision@10": {
+        "mean": 0.26666666666666666,
+        "count": 3
+      },
+      "recall@10": {
+        "mean": 0.13333333333333333,
+        "count": 3
+      }
+    },
+    "Motorcycle": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 5
+      },
+      "recall@1": {
+        "mean": 0.038461538461538464,
+        "count": 5
+      },
+      "precision@5": {
+        "mean": 0.4,
+        "count": 5
+      },
+      "recall@5": {
+        "mean": 0.07692307692307693,
+        "count": 5
+      },
+      "precision@10": {
+        "mean": 0.24,
+        "count": 5
+      },
+      "recall@10": {
+        "mean": 0.09230769230769231,
+        "count": 5
+      }
+    },
+    "AircraftBuoyant": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 1
+      },
+      "recall@1": {
+        "mean": 0.06666666666666667,
+        "count": 1
+      },
+      "precision@5": {
+        "mean": 0.2,
+        "count": 1
+      },
+      "recall@5": {
+        "mean": 0.06666666666666667,
+        "count": 1
+      },
+      "precision@10": {
+        "mean": 0.1,
+        "count": 1
+      },
+      "recall@10": {
+        "mean": 0.06666666666666667,
+        "count": 1
+      }
+    },
+    "TruckNonContainer": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 3
+      },
+      "recall@1": {
+        "mean": 0.05263157894736842,
+        "count": 3
+      },
+      "precision@5": {
+        "mean": 0.20000000000000004,
+        "count": 3
+      },
+      "recall@5": {
+        "mean": 0.05263157894736842,
+        "count": 3
+      },
+      "precision@10": {
+        "mean": 0.13333333333333333,
+        "count": 3
+      },
+      "recall@10": {
+        "mean": 0.07017543859649122,
+        "count": 3
+      }
+    },
+    "MultiSeat": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 4
+      },
+      "recall@1": {
+        "mean": 0.02564102564102564,
+        "count": 4
+      },
+      "precision@5": {
+        "mean": 0.30000000000000004,
+        "count": 4
+      },
+      "recall@5": {
+        "mean": 0.038461538461538464,
+        "count": 4
+      },
+      "precision@10": {
+        "mean": 0.15000000000000002,
+        "count": 4
+      },
+      "recall@10": {
+        "mean": 0.038461538461538464,
+        "count": 4
+      }
+    },
+    "Door": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 1
+      },
+      "recall@1": {
+        "mean": 0.03333333333333333,
+        "count": 1
+      },
+      "precision@5": {
+        "mean": 0.2,
+        "count": 1
+      },
+      "recall@5": {
+        "mean": 0.03333333333333333,
+        "count": 1
+      },
+      "precision@10": {
+        "mean": 0.1,
+        "count": 1
+      },
+      "recall@10": {
+        "mean": 0.03333333333333333,
+        "count": 1
+      }
+    },
+    "PianoBoard": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 2
+      },
+      "recall@1": {
+        "mean": 0.05555555555555555,
+        "count": 2
+      },
+      "precision@5": {
+        "mean": 0.4,
+        "count": 2
+      },
+      "recall@5": {
+        "mean": 0.1111111111111111,
+        "count": 2
+      },
+      "precision@10": {
+        "mean": 0.2,
+        "count": 2
+      },
+      "recall@10": {
+        "mean": 0.1111111111111111,
+        "count": 2
+      }
+    },
+    "RoundTable": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 3
+      },
+      "recall@1": {
+        "mean": 0.027777777777777776,
+        "count": 3
+      },
+      "precision@5": {
+        "mean": 0.5333333333333333,
+        "count": 3
+      },
+      "recall@5": {
+        "mean": 0.07407407407407407,
+        "count": 3
+      },
+      "precision@10": {
+        "mean": 0.3333333333333333,
+        "count": 3
+      },
+      "recall@10": {
+        "mean": 0.09259259259259257,
+        "count": 3
+      }
+    },
+    "Violin": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 3
+      },
+      "recall@1": {
+        "mean": 0.05263157894736842,
+        "count": 3
+      },
+      "precision@5": {
+        "mean": 0.20000000000000004,
+        "count": 3
+      },
+      "recall@5": {
+        "mean": 0.05263157894736842,
+        "count": 3
+      },
+      "precision@10": {
+        "mean": 0.13333333333333333,
+        "count": 3
+      },
+      "recall@10": {
+        "mean": 0.07017543859649122,
+        "count": 3
+      }
+    },
+    "Bed": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 4
+      },
+      "recall@1": {
+        "mean": 0.037037037037037035,
+        "count": 4
+      },
+      "precision@5": {
+        "mean": 0.5,
+        "count": 4
+      },
+      "recall@5": {
+        "mean": 0.09259259259259259,
+        "count": 4
+      },
+      "precision@10": {
+        "mean": 0.3,
+        "count": 4
+      },
+      "recall@10": {
+        "mean": 0.1111111111111111,
+        "count": 4
+      }
+    },
+    "Tool": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 1
+      },
+      "recall@1": {
+        "mean": 0.06666666666666667,
+        "count": 1
+      },
+      "precision@5": {
+        "mean": 0.2,
+        "count": 1
+      },
+      "recall@5": {
+        "mean": 0.06666666666666667,
+        "count": 1
+      },
+      "precision@10": {
+        "mean": 0.1,
+        "count": 1
+      },
+      "recall@10": {
+        "mean": 0.06666666666666667,
+        "count": 1
+      }
+    },
+    "Glasses": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 2
+      },
+      "recall@1": {
+        "mean": 0.1111111111111111,
+        "count": 2
+      },
+      "precision@5": {
+        "mean": 0.7,
+        "count": 2
+      },
+      "recall@5": {
+        "mean": 0.3888888888888889,
+        "count": 2
+      },
+      "precision@10": {
+        "mean": 0.35,
+        "count": 2
+      },
+      "recall@10": {
+        "mean": 0.3888888888888889,
+        "count": 2
+      }
+    },
+    "Cellphone": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 1
+      },
+      "recall@1": {
+        "mean": 0.05263157894736842,
+        "count": 1
+      },
+      "precision@5": {
+        "mean": 0.2,
+        "count": 1
+      },
+      "recall@5": {
+        "mean": 0.05263157894736842,
+        "count": 1
+      },
+      "precision@10": {
+        "mean": 0.1,
+        "count": 1
+      },
+      "recall@10": {
+        "mean": 0.05263157894736842,
+        "count": 1
+      }
+    },
+    "Bird": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 1
+      },
+      "recall@1": {
+        "mean": 0.04,
+        "count": 1
+      },
+      "precision@5": {
+        "mean": 0.2,
+        "count": 1
+      },
+      "recall@5": {
+        "mean": 0.04,
+        "count": 1
+      },
+      "precision@10": {
+        "mean": 0.1,
+        "count": 1
+      },
+      "recall@10": {
+        "mean": 0.04,
+        "count": 1
+      }
+    },
+    "Ship": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 3
+      },
+      "recall@1": {
+        "mean": 0.018518518518518517,
+        "count": 3
+      },
+      "precision@5": {
+        "mean": 0.5333333333333333,
+        "count": 3
+      },
+      "recall@5": {
+        "mean": 0.04938271604938271,
+        "count": 3
+      },
+      "precision@10": {
+        "mean": 0.3,
+        "count": 3
+      },
+      "recall@10": {
+        "mean": 0.05555555555555555,
+        "count": 3
+      }
+    },
+    "Wheel": {
+      "precision@1": {
+        "mean": 1.0,
+        "count": 1
+      },
+      "recall@1": {
+        "mean": 0.07142857142857142,
+        "count": 1
+      },
+      "precision@5": {
+        "mean": 0.4,
+        "count": 1
+      },
+      "recall@5": {
+        "mean": 0.14285714285714285,
+        "count": 1
+      },
+      "precision@10": {
+        "mean": 0.2,
+        "count": 1
+      },
+      "recall@10": {
+        "mean": 0.14285714285714285,
+        "count": 1
+      }
+    }
+  }
+}
