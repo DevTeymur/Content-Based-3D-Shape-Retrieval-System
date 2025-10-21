@@ -61,7 +61,7 @@ class KNNEngine:
             print(f"❌ Error loading processed features: {e}")
             return False
     
-    def build_index(self, n_neighbors=50, metric='euclidean', algorithm='auto'):
+    def build_index(self, n_neighbors=50, metric='euclidean', algorithm='auto', use_step4_normalization=False):
         """
         Build KNN index for fast similarity search
         
@@ -69,6 +69,7 @@ class KNNEngine:
             n_neighbors: Maximum number of neighbors to pre-compute
             metric: Distance metric ('euclidean', 'cosine', 'manhattan', 'chebyshev')
             algorithm: Algorithm for neighbor search ('auto', 'ball_tree', 'kd_tree', 'brute')
+            use_step4_normalization: Use same normalization as Step 4 for fair comparison
         """
         if self.X_features is None:
             print("❌ Please load processed features first")
@@ -78,32 +79,64 @@ class KNNEngine:
             print(f"🔄 Building KNN index with {metric} distance...")
             start_time = time.time()
             
+            # CHECK IF FEATURES ARE ALREADY NORMALIZED
+            feature_range = self.X_features.max() - self.X_features.min()
+            feature_mean = abs(self.X_features.mean())
+            
+            print(f"📊 Feature statistics:")
+            print(f"   Range: {feature_range:.3f}")
+            print(f"   Mean: {feature_mean:.3f}")
+            print(f"   Min: {self.X_features.min():.3f}")
+            print(f"   Max: {self.X_features.max():.3f}")
+            
+            # APPLY STEP 4 STYLE NORMALIZATION ONLY IF REQUESTED
+            if use_step4_normalization:
+                print("🔧 Applying Step 4 z-score normalization...")
+                
+                # Z-score standardization (same as Step 4)
+                means = np.mean(self.X_features, axis=0)
+                stds = np.std(self.X_features, axis=0)
+                stds[stds == 0] = 1  # Avoid division by zero
+                
+                # Apply standardization
+                self.X_features_normalized = (self.X_features - means) / stds
+                print(f"   Z-score normalized range: [{self.X_features_normalized.min():.3f}, {self.X_features_normalized.max():.3f}]")
+                
+                # Use normalized features for KNN
+                features_for_knn = self.X_features_normalized
+            else:
+                # Use original features (already normalized from preparation)
+                print("📏 Using original normalized features from preparation")
+                features_for_knn = self.X_features
+                self.X_features_normalized = self.X_features  # Store reference
+            
             # Initialize NearestNeighbors model
             self.nn_model = NearestNeighbors(
-                n_neighbors=min(n_neighbors, len(self.X_features)),
+                n_neighbors=min(n_neighbors, len(features_for_knn)),
                 metric=metric,
                 algorithm=algorithm,
                 n_jobs=-1  # Use all CPU cores
             )
             
             # Fit the model
-            self.nn_model.fit(self.X_features)
+            self.nn_model.fit(features_for_knn)
             
             build_time = time.time() - start_time
             self.is_fitted = True
             
             print(f"✅ KNN index built successfully!")
             print(f"   ⏱️  Build time: {build_time:.2f} seconds")
-            print(f"   📊 Index size: {len(self.X_features)} shapes")
+            print(f"   📊 Index size: {len(features_for_knn)} shapes")
             print(f"   🎯 Distance metric: {metric}")
             print(f"   🔧 Algorithm: {algorithm}")
+            print(f"   📏 Normalization: {'Step 4 z-score' if use_step4_normalization else 'Original preparation'}")
             
             return True
             
         except Exception as e:
             print(f"❌ Error building KNN index: {e}")
             return False
-    
+
     def query_knn(self, query_shape_index, k=10):
         """
         Perform K-nearest neighbors search
@@ -120,8 +153,11 @@ class KNNEngine:
             return None
         
         try:
-            # Get query features
-            query_vector = self.X_features[query_shape_index].reshape(1, -1)
+            # Use the same normalized features that were used for building the index
+            if hasattr(self, 'X_features_normalized'):
+                query_vector = self.X_features_normalized[query_shape_index].reshape(1, -1)
+            else:
+                query_vector = self.X_features[query_shape_index].reshape(1, -1)
             
             # Perform KNN search
             start_time = time.time()
@@ -154,8 +190,11 @@ class KNNEngine:
             return None
         
         try:
-            # Get query features
-            query_vector = self.X_features[query_shape_index].reshape(1, -1)
+            # FIX: Use the same normalized features that were used for building the index
+            if hasattr(self, 'X_features_normalized'):
+                query_vector = self.X_features_normalized[query_shape_index].reshape(1, -1)
+            else:
+                query_vector = self.X_features[query_shape_index].reshape(1, -1)
             
             # Perform range search
             start_time = time.time()

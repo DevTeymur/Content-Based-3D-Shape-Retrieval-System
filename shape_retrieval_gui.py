@@ -1039,7 +1039,8 @@ diameter: {row.get('diameter', 'N/A'):.3f}
                 self.status_label.config(text="❌ Failed to load KNN features", fg="red")
                 return False
             
-            if not self.knn_engine.build_index(n_neighbors=50, metric='euclidean'):
+            # BUILD INDEX WITHOUT DOUBLE NORMALIZATION
+            if not self.knn_engine.build_index(n_neighbors=50, metric='euclidean', use_step4_normalization=False):
                 self.status_label.config(text="❌ Failed to build KNN index", fg="red")
                 return False
             
@@ -1050,7 +1051,7 @@ diameter: {row.get('diameter', 'N/A'):.3f}
                 return False
             
             self.step5_initialized = True
-            self.performance_label.config(text="✅ Step 5 engines ready - KNN index built with 2006 shapes")
+            self.performance_label.config(text="✅ Step 5 engines ready - KNN index built with original normalization")
             return True
             
         except Exception as e:
@@ -1281,9 +1282,13 @@ Currently viewing: {self.mesh_var.get() if self.mesh_var.get() != "Select mesh..
             return
         
         try:
+            # SET DETERMINISTIC BEHAVIOR
+            np.random.seed(42)  # Fixed seed for consistency
+            
             self.status_label.config(text="🔄 Comparing Step 4 vs Step 5 methods...", fg="blue")
             
             query_filename = self.mesh_var.get()
+            print(f"🎯 Deterministic comparison for: {query_filename}")
             
             # Step 4: Compute using your custom distance (advanced_combined)
             old_distance_var = self.distance_var.get()
@@ -1294,8 +1299,14 @@ Currently viewing: {self.mesh_var.get() if self.mesh_var.get() != "Select mesh..
             step4_time = time.time() - step4_start
             step4_results = self.current_results.copy() if self.current_results else []
             
-            # Step 5: Compute using KNN
+            # Step 5: Compute using KNN WITH STEP 4 NORMALIZATION
             if not self.initialize_step5_engines():
+                return
+            
+            # REBUILD KNN INDEX WITH STEP 4 NORMALIZATION
+            print("🔧 Rebuilding KNN index with Step 4 normalization...")
+            if not self.knn_engine.build_index(n_neighbors=50, metric='euclidean', use_step4_normalization=True):
+                messagebox.showerror("Error", "Failed to rebuild KNN index!")
                 return
             
             # Find query index
@@ -1323,6 +1334,12 @@ Currently viewing: {self.mesh_var.get() if self.mesh_var.get() != "Select mesh..
             speedup = step4_time / step5_time if step5_time > 0 else float('inf')
             self.performance_label.config(text=f"⚡ Speedup: {speedup:.1f}x faster (Step 4: {step4_time:.3f}s vs Step 5: {step5_time:.4f}s)")
             
+            # ADD DEBUG INFO
+            print(f"🔍 Debug Info:")
+            print(f"  Step 4 distance range: {min([r['distance'] for r in step4_results]):.4f} - {max([r['distance'] for r in step4_results]):.4f}")
+            if len(knn_results_df) > 0:
+                print(f"  Step 5 distance range: {knn_results_df['distance'].min():.4f} - {knn_results_df['distance'].max():.4f}")
+        
         except Exception as e:
             messagebox.showerror("Error", f"Method comparison failed:\n{str(e)}")
             self.status_label.config(text="❌ Method comparison failed", fg="red")
