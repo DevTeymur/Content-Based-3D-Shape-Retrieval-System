@@ -139,15 +139,12 @@ class KNNEngine:
 
     def query_knn(self, query_shape_index, k=10):
         """
-        Perform K-nearest neighbors search
-        
-        Args:
-            query_shape_index: Index of query shape in the database
-            k: Number of nearest neighbors to return
-            
-        Returns:
-            DataFrame with nearest neighbors and distances
+        Perform K-nearest neighbors search - DEBUG VERSION
         """
+        print(f"\n🔍 === KNN SEARCH DEBUG ===")
+        print(f"Query Index: {query_shape_index}")
+        print(f"Requested K: {k}")
+        
         if not self.is_fitted:
             print("❌ KNN index not built. Please call build_index() first")
             return None
@@ -164,10 +161,19 @@ class KNNEngine:
             distances, indices = self.nn_model.kneighbors(query_vector, n_neighbors=k)
             query_time = time.time() - start_time
             
-            # Convert to results DataFrame
-            results = self._create_results_dataframe(indices[0], distances[0], query_time)
+            # sklearn returns sorted results, but let's ensure proper order
+            distances = distances[0]  # Remove batch dimension
+            indices = indices[0]      # Remove batch dimension
+            
+            print(f"✅ KNN returned exactly {len(distances)} results")
+            print(f"   Distance range: [{distances.min():.4f}, {distances.max():.4f}]")
+            print(f"   Query time: {query_time:.4f}s")
+            
+            # Convert to results DataFrame (already sorted by sklearn)
+            results = self._create_results_dataframe(indices, distances, query_time)
             
             print(f"🔍 K-NN search completed: {k} neighbors in {query_time:.4f}s")
+            print(f"=== END KNN SEARCH DEBUG ===\n")
             return results
             
         except Exception as e:
@@ -176,54 +182,117 @@ class KNNEngine:
     
     def query_range(self, query_shape_index, radius=1.0):
         """
-        Perform range (radius) search
-        
-        Args:
-            query_shape_index: Index of query shape in the database
-            radius: Maximum distance for neighbors
-            
-        Returns:
-            DataFrame with neighbors within radius
+        Perform range (radius) search - ENHANCED DEBUG VERSION
         """
+        print(f"\n🔍 === RANGE SEARCH DEBUG ===")
+        print(f"Query Index: {query_shape_index}")
+        print(f"Requested Radius: {radius}")
+        print(f"Database Size: {len(self.X_features)}")
+        
         if not self.is_fitted:
             print("❌ KNN index not built. Please call build_index() first")
             return None
         
         try:
-            # FIX: Use the same normalized features that were used for building the index
+            # Use the same normalized features that were used for building the index
             if hasattr(self, 'X_features_normalized'):
                 query_vector = self.X_features_normalized[query_shape_index].reshape(1, -1)
+                print(f"✅ Using normalized features")
             else:
                 query_vector = self.X_features[query_shape_index].reshape(1, -1)
+                print(f"✅ Using original features")
+            
+            print(f"Query vector shape: {query_vector.shape}")
             
             # Perform range search
             start_time = time.time()
             
+            # CHECK WHICH METHOD IS BEING USED
+            print(f"\n🔧 Checking available methods:")
+            print(f"   nn_model type: {type(self.nn_model)}")
+            print(f"   Has radius_neighbors: {hasattr(self.nn_model, 'radius_neighbors')}")
+            
             # Use radius_neighbors if available
             if hasattr(self.nn_model, 'radius_neighbors'):
-                distances, indices = self.nn_model.radius_neighbors(query_vector, radius=radius)
-                distances = distances[0]
-                indices = indices[0]
+                print(f"🎯 Using radius_neighbors method")
+                try:
+                    distances, indices = self.nn_model.radius_neighbors(query_vector, radius=radius)
+                    distances = distances[0]
+                    indices = indices[0]
+                    print(f"✅ radius_neighbors SUCCESS: {len(distances)} results")
+                    print(f"   Distance range: [{distances.min():.4f}, {distances.max():.4f}]")
+                    method_used = "radius_neighbors"
+                except Exception as e:
+                    print(f"❌ radius_neighbors FAILED: {e}")
+                    print(f"🔄 Falling back to KNN method...")
+                    # Fall through to KNN method
+                    method_used = "knn_fallback"
             else:
-                # Fallback: use KNN then filter by distance
-                max_neighbors = min(100, len(self.X_features))
+                print(f"🔄 radius_neighbors not available, using KNN fallback")
+                method_used = "knn_fallback"
+            
+            # KNN Fallback method (if radius_neighbors failed or unavailable)
+            if method_used == "knn_fallback" or 'distances' not in locals():
+                print(f"\n🔧 Using KNN fallback method:")
+                
+                # INCREASE the fallback limit significantly
+                max_neighbors = min(1000, len(self.X_features))  # Increased from 100 to 1000
+                print(f"   Max neighbors to query: {max_neighbors}")
+                
                 all_distances, all_indices = self.nn_model.kneighbors(query_vector, n_neighbors=max_neighbors)
+                print(f"   KNN returned {len(all_distances[0])} neighbors")
+                print(f"   KNN distance range: [{all_distances[0].min():.4f}, {all_distances[0].max():.4f}]")
                 
                 # Filter by radius
                 mask = all_distances[0] <= radius
                 distances = all_distances[0][mask]
                 indices = all_indices[0][mask]
+                
+                print(f"✅ After radius filter ({radius}): {len(distances)} results")
+                if len(distances) > 0:
+                    print(f"   Filtered distance range: [{distances.min():.4f}, {distances.max():.4f}]")
+                
+                # CHECK IF WE HIT THE LIMIT
+                if len(distances) == max_neighbors:
+                    print(f"⚠️  WARNING: Hit max_neighbors limit! Might be missing results.")
+                elif all_distances[0][-1] <= radius:
+                    print(f"⚠️  WARNING: Last KNN neighbor ({all_distances[0][-1]:.4f}) is within radius. Increase max_neighbors!")
             
             query_time = time.time() - start_time
+            
+            print(f"\n📊 FINAL RESULTS:")
+            print(f"   Method used: {method_used}")
+            print(f"   Results found: {len(distances)}")
+            print(f"   Query time: {query_time:.4f}s")
+            
+            # Sort by distance before creating DataFrame
+            if len(distances) > 0:
+                print(f"🔧 Sorting {len(distances)} results...")
+                # Create pairs and sort by distance
+                distance_index_pairs = list(zip(distances, indices))
+                distance_index_pairs.sort(key=lambda x: x[0])  # Sort by distance
+                
+                # Unzip back to separate arrays
+                distances = np.array([pair[0] for pair in distance_index_pairs])
+                indices = np.array([pair[1] for pair in distance_index_pairs])
+                
+                print(f"✅ Sorted - Distance range: [{distances.min():.4f}, {distances.max():.4f}]")
+                print(f"   First 5 distances: {distances[:5]}")
+                print(f"   Last 5 distances: {distances[-5:] if len(distances) > 5 else distances}")
             
             # Convert to results DataFrame
             results = self._create_results_dataframe(indices, distances, query_time)
             
+            print(f"📋 Created DataFrame with {len(results)} rows")
             print(f"🔍 Range search completed: {len(results)} neighbors within radius {radius} in {query_time:.4f}s")
+            print(f"=== END RANGE SEARCH DEBUG ===\n")
+            
             return results
             
         except Exception as e:
             print(f"❌ Error in range query: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     def query_by_filename(self, filename, k=10, search_type='knn', radius=1.0):
@@ -267,7 +336,7 @@ class KNNEngine:
         for i, (idx, dist) in enumerate(zip(indices, distances)):
             meta = self.metadata[idx]
             results_data.append({
-                'rank': i + 1,
+                'rank': i + 1,  # This should already be correct since we sort before calling this
                 'database_index': idx,
                 'filename': meta['filename'],
                 'category': meta['category'],
@@ -276,7 +345,14 @@ class KNNEngine:
                 'query_time': query_time if i == 0 else 0  # Only store query time once
             })
         
-        return pd.DataFrame(results_data)
+        # Create DataFrame and ensure it's sorted by distance (double-check)
+        df = pd.DataFrame(results_data)
+        df = df.sort_values('distance').reset_index(drop=True)
+        
+        # Re-assign correct ranks after sorting
+        df['rank'] = range(1, len(df) + 1)
+        
+        return df
     
     def get_shape_info(self, shape_index):
         """Get detailed information about a shape by index"""

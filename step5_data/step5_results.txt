@@ -1,0 +1,286 @@
+
+\subsection{KNN Results}
+
+\subsubsection{Speed Comparison: Step 4 vs Step 5}
+
+\textbf{Execution Time Analysis:}
+\begin{verbatim}
+Step 4 (Advanced Combined): 0.297–0.350 s
+Step 5 (KNN Search):        0.0007–0.0018 s
+Step 5 (Range Search):      0.0048 s
+Speedup Achieved: 199 - 470× faster
+Average Speedup: ~335× improvement
+\end{verbatim}
+
+\textbf{Scalability Analysis:}
+\begin{itemize}
+    \item \textbf{Step 4 Complexity:} $O(n)$ (linear with database size)
+    \item \textbf{Step 5 Complexity:} $O(\log n)$ (logarithmic with database size)
+    \item \textbf{Index Build Time:} $\approx$ 0.02–0.05 s for 2006 shapes
+\end{itemize}
+
+
+\textbf{Result Overlap and Quality:}
+\begin{verbatim}
+Example Query: D00668_6732.obj (Insect category)
+Top 10 Overlap: 7/10 shapes in common
+Agreement Level: High (70% overlap)
+Distance Range Comparison:
+Step 4: 0.00 – 0.02
+Step 5: 0.00 – 3.54
+Ranking consistency preserved despite scale difference (~165×)
+\end{verbatim}
+
+\textbf{Category Distribution in KNN Results:}
+\begin{itemize}
+    \item Cross-category discoveries: Insect → Helicopter, PlantIndoors, House
+    \item Semantic grouping: Musical instruments (Violin, Guitar) cluster well
+    \item Geometric similarity: Regular structured objects (beds, keyboards)
+\end{itemize}
+
+\vspace{5pt}
+\textit{[Placeholder: Insert figure showing example KNN retrieval results here.]}
+
+
+\subsubsection{Range Search Results}
+
+Varying the radius parameter $R$ controls search precision:
+\begin{itemize}
+    \item $R=1.0$: 4–5 shapes
+    \item $R=1.5$: 6–7 shapes
+    \item $R=2.0$: 8 shapes
+    \item $R=3.0$: 12+ shapes
+\end{itemize}
+The radius-based approach is effective for adaptive retrieval when an exact number of results is not required.
+
+\vspace{5pt}
+\textit{[Placeholder: Insert figure showing example Range Search results here.]}
+
+
+we gonna change this part of the report as well. I will provide some results to you, additional notes:
+1. when i run and provide you with knn and range results, assume that i have figure that contains graph of the objects that are similar to each other. i need to reference in text for that graphs
+2. no need for veeery very detailed results, altho im gonna provide very detailed
+3. Also say that i will run same objects that i run in section 4
+4. Mention that as we increase radius the number of similar objects increase but all the time we only show top 5
+5. Sometiems results of knn and range are same, we need to argue it why as well in our text
+6. In range results as you can see depending on the object and radius we can find couple hundreds similar shapes in database, you need to mention that as well please
+7. Lastly, i run 3 different objects and i provided 2 different result for each one of them which makes 6, and i have 6 figures.
+
+Here are the results:
+
+
+Files:
+--------------------------------------------------------------------------------
+1. Insect (D00082\_7162.obj)
+
+SELECTED MESH INFORMATION
+========================================
+📄 Filename: D00082_7162.obj
+📁 Category: Insect
+📂 Path: normalized_data/Insect/D00082_7162.obj
+🎯 Database Index: 5
+
+FEATURE PREVIEW:
+area: 1.676
+volume: 0.064
+compactness: 1.16e+03
+diameter: 1.073
+
+
+
+🚀 KNN SEARCH RESULTS (Step 5)
+======================================================================
+Search Type: K-NN (K=10)
+Query: D00082_7162.obj
+Results Found: 10
+Query Time: 0.0016 seconds
+
+📋 K-NN finds exactly 10 most similar shapes
+
+TOP RESULTS:
+----------------------------------------------------------------------
+Rank Distance     Category        Filename                 
+----------------------------------------------------------------------
+1    0.0000       Insect          D00082_7162.obj          
+2    2.3521       Hat             m1635_5092.obj           
+3    2.5933       HumanHead       m369_9843.obj            
+4    2.9534       Quadruped       D00867_7873.obj          
+5    2.9884       Musical_Instrument m647_9026.obj            
+6    3.1217       Quadruped       D00795_6759.obj          
+7    3.1676       Mug             m506_8692.obj            
+8    3.1802       Skyscraper      D00300_6372.obj          
+9    3.2013       Biplane         m1122_6704.obj           
+10   3.2185       Humanoid        m258_6183.obj    
+
+
+🚀 RANGE SEARCH RESULTS (Step 5)
+======================================================================
+Search Type: Range (R=3.4)
+Query: D00082_7162.obj
+Results Found: 13
+Query Time: 0.0038 seconds
+
+📋 Range search finds ALL shapes within distance 3.4
+
+TOP RESULTS:
+----------------------------------------------------------------------
+Rank Distance     Category        Filename                 
+----------------------------------------------------------------------
+1    0.0000       Insect          D00082_7162.obj          
+2    2.3521       Hat             m1635_5092.obj           
+3    2.5933       HumanHead       m369_9843.obj            
+4    2.9534       Quadruped       D00867_7873.obj          
+5    2.9884       Musical_Instrument m647_9026.obj            
+6    3.1217       Quadruped       D00795_6759.obj          
+7    3.1676       Mug             m506_8692.obj            
+8    3.1802       Skyscraper      D00300_6372.obj          
+9    3.2013       Biplane         m1122_6704.obj           
+10   3.2185       Humanoid        m258_6183.obj            
+11   3.3418       City            D01068_5538.obj          
+12   3.3544       Truck           m1570_9486.obj           
+13   3.3788       Humanoid        m250_6845.obj      
+
+--------------------------------------------------------------------------------
+2. Skyscraper (D00872\_9939.obj)
+SELECTED MESH INFORMATION
+========================================
+📄 Filename: D00872_9939.obj
+📁 Category: Skyscraper
+📂 Path: normalized_data/Skyscraper/D00872_9939.obj
+🎯 Database Index: 1181
+
+FEATURE PREVIEW:
+area: 1.438
+volume: -0.035
+compactness: 2.48e+03
+diameter: 1.004
+
+
+
+🚀 KNN SEARCH RESULTS (Step 5)
+======================================================================
+Search Type: K-NN (K=10)
+Query: D00872_9939.obj
+Results Found: 10
+Query Time: 0.0025 seconds
+
+📋 K-NN finds exactly 10 most similar shapes
+
+TOP RESULTS:
+----------------------------------------------------------------------
+Rank Distance     Category        Filename                 
+----------------------------------------------------------------------
+1    0.0000       Skyscraper      D00872_9939.obj          
+2    1.1494       Gun             D00244_7534.obj          
+3    1.1859       AquaticAnimal   m71_4924.obj             
+4    1.2666       Rocket          D00528_6258.obj          
+5    1.3248       Humanoid        m212_6195.obj            
+6    1.3395       Insect          D00315_7024.obj          
+7    1.4067       Insect          m1_5332.obj              
+8    1.4698       Fish            D00850_6021.obj          
+9    1.4903       Fish            D00636_6427.obj          
+10   1.5012       Hand            D01153_6908.obj   
+
+
+🚀 RANGE SEARCH RESULTS (Step 5)
+======================================================================
+Search Type: Range (R=3)
+Query: D00872_9939.obj
+Results Found: 739
+Query Time: 0.0033 seconds
+
+📋 Range search finds ALL shapes within distance 3.4
+
+TOP RESULTS:
+----------------------------------------------------------------------
+Rank Distance     Category        Filename                 
+----------------------------------------------------------------------
+1    0.0000       Skyscraper      D00872_9939.obj          
+2    1.1494       Gun             D00244_7534.obj          
+3    1.1859       AquaticAnimal   m71_4924.obj             
+4    1.2666       Rocket          D00528_6258.obj          
+5    1.3248       Humanoid        m212_6195.obj            
+6    1.3395       Insect          D00315_7024.obj          
+7    1.4067       Insect          m1_5332.obj              
+8    1.4698       Fish            D00850_6021.obj          
+9    1.4903       Fish            D00636_6427.obj          
+10   1.5012       Hand            D01153_6908.obj          
+11   1.5271       Bus             D00446_7823.obj          
+12   1.5300       Ship            D00896_9396.obj          
+13   1.5518       Humanoid        m198_7548.obj            
+14   1.5541       Fish            D00643_5455.obj          
+15   1.5773       Fish            D00398_6319.obj   
+... and 526 more results
+
+--------------------------------------------------------------------------------
+3. Chess (D01080\_7763.obj)
+
+
+SELECTED MESH INFORMATION
+========================================
+📄 Filename: D01080_7763.obj
+📁 Category: Chess
+📂 Path: normalized_data/Chess/D01080_7763.obj
+🎯 Database Index: 1427
+
+FEATURE PREVIEW:
+area: 0.918
+volume: 0.036
+compactness: 5.98e+02
+diameter: 1.025
+
+
+
+🚀 KNN SEARCH RESULTS (Step 5)
+======================================================================
+Search Type: K-NN (K=10)
+Query: D01080_7763.obj
+Results Found: 10
+Query Time: 0.0041 seconds
+
+📋 K-NN finds exactly 10 most similar shapes
+
+TOP RESULTS:
+----------------------------------------------------------------------
+Rank Distance     Category        Filename                 
+----------------------------------------------------------------------
+1    0.0000       Chess           D01080_7763.obj          
+2    0.9777       Chess           m1598_7814.obj           
+3    1.0050       Chess           D01112_7813.obj          
+4    1.1253       Chess           m1612_7792.obj           
+5    1.1953       Chess           m1599_7759.obj           
+6    1.2666       Chess           D01045_8019.obj          
+7    1.3233       Motorcycle      D00945_7776.obj          
+8    1.3473       Chess           D01130_7792.obj          
+9    1.4366       Chess           m1603_7766.obj           
+10   1.4678       Chess           D01105_8352.obj    
+
+🚀 RANGE SEARCH RESULTS (Step 5)
+======================================================================
+Search Type: Range (R=3.0)
+Query: D01080_7763.obj
+Results Found: 617
+Query Time: 0.0017 seconds
+
+📋 Range search finds ALL shapes within distance 3
+
+TOP RESULTS:
+----------------------------------------------------------------------
+Rank Distance     Category        Filename                 
+----------------------------------------------------------------------
+1    0.0000       Chess           D01080_7763.obj          
+2    0.9777       Chess           m1598_7814.obj           
+3    1.0050       Chess           D01112_7813.obj          
+4    1.1253       Chess           m1612_7792.obj           
+5    1.1953       Chess           m1599_7759.obj           
+6    1.2666       Chess           D01045_8019.obj          
+7    1.3233       Motorcycle      D00945_7776.obj          
+8    1.3473       Chess           D01130_7792.obj          
+9    1.4366       Chess           m1603_7766.obj           
+10   1.4678       Chess           D01105_8352.obj          
+11   1.4882       Chess           m1602_8005.obj           
+12   1.4896       Chess           m1613_8359.obj           
+13   1.6131       Chess           D01049_9690.obj          
+14   1.6305       Car             m1515_7776.obj           
+15   1.6777       Chess           D01043_7764.obj          
+... and 602 more results

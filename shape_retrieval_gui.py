@@ -181,7 +181,7 @@ class ShapeRetrievalGUI:
         search_type_menu.pack(side=LEFT, padx=(5, 15))
 
         # Step 5 action buttons
-        knn_btn = Button(step5_controls, text="KNN Search", command=self.knn_search, 
+        knn_btn = Button(step5_controls, text="Search", command=self.knn_search, 
                         bg="lightgreen", font=("Arial", 9, "bold"))
         knn_btn.pack(side=LEFT, padx=5)
 
@@ -1060,7 +1060,7 @@ diameter: {row.get('diameter', 'N/A'):.3f}
             return False
 
     def knn_search(self):
-        """Perform KNN search using Step 5 engine"""
+        """Perform KNN or Range search using Step 5 engine"""
         if self.features_df is None:
             messagebox.showwarning("No Data", "Please load data first!")
             return
@@ -1074,7 +1074,10 @@ diameter: {row.get('diameter', 'N/A'):.3f}
             return
         
         try:
-            self.status_label.config(text="🔄 Performing KNN search...", fg="blue")
+            # Get search type FIRST
+            search_type = self.search_type_var.get()
+            
+            self.status_label.config(text=f"🔄 Performing {search_type.upper()} search...", fg="blue")
             
             # Get query filename and find its index in metadata
             query_filename = self.mesh_var.get()
@@ -1089,20 +1092,23 @@ diameter: {row.get('diameter', 'N/A'):.3f}
                 messagebox.showerror("Error", f"Query mesh '{query_filename}' not found in KNN database!")
                 return
             
-            # Perform search based on selected type
-            search_type = self.search_type_var.get()
-            
+            # FIX: Perform DIFFERENT searches based on type
             if search_type == "knn":
                 k_value = int(self.k_var.get())
                 results_df = self.knn_engine.query_knn(query_index, k=k_value)
                 search_info = f"K-NN (K={k_value})"
-            else:  # range search
+                print(f"🔍 Performed KNN search with K={k_value}")
+            elif search_type == "range":
                 radius_value = float(self.radius_var.get())
                 results_df = self.knn_engine.query_range(query_index, radius=radius_value)
                 search_info = f"Range (R={radius_value})"
+                print(f"🎯 Performed Range search with R={radius_value}")
+            else:
+                messagebox.showerror("Error", f"Unknown search type: {search_type}")
+                return
             
             if results_df is None:
-                messagebox.showerror("Error", "KNN search failed!")
+                messagebox.showerror("Error", f"{search_type.upper()} search failed!")
                 return
             
             # Store results for visualization
@@ -1113,7 +1119,7 @@ diameter: {row.get('diameter', 'N/A'):.3f}
                     'category': row['category'],
                     'distance': row['distance'],
                     'index': row['database_index'],
-                    'method': f'knn_{search_type}'
+                    'method': f'knn_{search_type}'  # This will be 'knn_knn' or 'knn_range'
                 })
             
             # Display results
@@ -1123,18 +1129,25 @@ diameter: {row.get('diameter', 'N/A'):.3f}
             query_time = results_df.iloc[0]['query_time'] if len(results_df) > 0 else 0
             self.performance_label.config(text=f"⚡ {search_info} completed in {query_time:.4f}s - {len(results_df)} results")
             
-            self.status_label.config(text="✅ KNN search completed successfully", fg="green")
+            self.status_label.config(text=f"✅ {search_type.upper()} search completed successfully", fg="green")
             
         except Exception as e:
-            messagebox.showerror("Error", f"KNN search failed:\n{str(e)}")
-            self.status_label.config(text="❌ KNN search failed", fg="red")
+            messagebox.showerror("Error", f"{search_type.upper()} search failed:\n{str(e)}")
+            self.status_label.config(text=f"❌ {search_type.upper()} search failed", fg="red")
 
     def _display_knn_results(self, results_df, search_info, query_filename):
-        """Display KNN search results"""
+        """Display KNN/Range search results"""
         mesh_info = self.get_selected_mesh_info()
         
+        # ENSURE RESULTS ARE SORTED BY DISTANCE
+        results_df = results_df.sort_values('distance').reset_index(drop=True)
+        results_df['rank'] = range(1, len(results_df) + 1)
+        
+        # UPDATE: Better title based on search type
+        search_type = self.search_type_var.get().upper()
+        
         results_text = mesh_info + "\n\n"
-        results_text += "🚀 KNN SEARCH RESULTS (Step 5)\n"
+        results_text += f"🚀 {search_type} SEARCH RESULTS (Step 5)\n"
         results_text += "=" * 70 + "\n"
         results_text += f"Search Type: {search_info}\n"
         results_text += f"Query: {query_filename}\n"
@@ -1144,11 +1157,18 @@ diameter: {row.get('diameter', 'N/A'):.3f}
             query_time = results_df.iloc[0]['query_time']
             results_text += f"Query Time: {query_time:.4f} seconds\n\n"
         
+        # ADD EXPLANATION OF DIFFERENCE
+        if search_type == "KNN":
+            results_text += f"📋 K-NN finds exactly {self.k_var.get()} most similar shapes\n\n"
+        else:  # RANGE
+            results_text += f"📋 Range search finds ALL shapes within distance {self.radius_var.get()}\n\n"
+        
         results_text += f"TOP RESULTS:\n"
         results_text += f"{'-' * 70}\n"
         results_text += f"{'Rank':<4} {'Distance':<12} {'Category':<15} {'Filename':<25}\n"
         results_text += f"{'-' * 70}\n"
         
+        # Display sorted results
         for _, row in results_df.head(15).iterrows():
             results_text += f"{row['rank']:<4} {row['distance']:<12.4f} {row['category']:<15} {row['filename']:<25}\n"
         
@@ -1166,22 +1186,38 @@ diameter: {row.get('diameter', 'N/A'):.3f}
             messagebox.showwarning("No Data", "Please load data first!")
             return
         
+        def update_progress(message, step=0, total=5):
+            """Update progress in results text"""
+            progress_bar = "█" * step + "░" * (total - step)
+            progress_text = f"""t-SNE VISUALIZATION PROGRESS
+{'=' * 40}
+{message}
+
+Progress: [{progress_bar}] {step}/{total}
+
+Status: {"Computing..." if step < total else "Complete!"}
+"""
+            self.results_text.delete(1.0, END)
+            self.results_text.insert(1.0, progress_text)
+            self.root.update()  # Force GUI update
+        
         try:
+            update_progress("Initializing Step 5 engines...", 1)
             self.status_label.config(text="🔄 Loading t-SNE visualization...", fg="blue")
             
             # Initialize dimensionality reducer if needed
             if not self.initialize_step5_engines():
                 return
             
+            update_progress("Checking for existing embedding...", 2)
+            
             # Check if embedding already exists
+            from pathlib import Path
             embedding_file = Path("step5_data/tsne_embedding_2d.npy")
             
             if not embedding_file.exists():
-                # Show loading message
-                self.status_label.config(text="🔄 Computing t-SNE embedding (this may take 1-2 minutes)...", fg="blue")
-                self.results_text.delete(1.0, END)
-                self.results_text.insert(1.0, "Computing t-SNE embedding...\nThis may take 1-2 minutes for 2006 shapes.\nPlease wait...")
-                self.root.update()  # Force GUI update
+                update_progress("Computing t-SNE embedding (1-2 minutes)...", 3)
+                self.status_label.config(text="🔄 Computing t-SNE embedding...", fg="blue")
                 
                 # Compute t-SNE in main thread (blocking but safe)
                 if not self.dimensionality_reducer.compute_tsne(perplexity=30, n_iter=1000):
@@ -1191,13 +1227,18 @@ diameter: {row.get('diameter', 'N/A'):.3f}
                 self.dimensionality_reducer.save_embedding()
             else:
                 # Load existing embedding
+                import numpy as np
                 self.dimensionality_reducer.X_2d = np.load(embedding_file)
                 print("✅ Loaded existing t-SNE embedding")
+            
+            update_progress("Creating interactive plot...", 4)
             
             # Create interactive plot (on main thread)
             if not self.dimensionality_reducer.create_interactive_plot():
                 self.status_label.config(text="❌ t-SNE plot creation failed", fg="red")
                 return
+            
+            update_progress("Opening visualization...", 5)
             
             # Show the plot (on main thread)
             self.dimensionality_reducer.show_plot()
@@ -1205,7 +1246,6 @@ diameter: {row.get('diameter', 'N/A'):.3f}
             self.status_label.config(text="✅ t-SNE visualization opened!", fg="green")
             self.performance_label.config(text="🎨 t-SNE plot: Hover points for details, right-click for KNN highlighting")
             
-            # Update results text
             # Get actual statistics from your dimensionality reducer
             if hasattr(self.dimensionality_reducer, 'X_2d') and self.dimensionality_reducer.X_2d is not None:
                 embedding_shape = self.dimensionality_reducer.X_2d.shape
@@ -1243,7 +1283,7 @@ CURRENT DATABASE STATISTICS:
 
 TOP CATEGORIES IN DATABASE:
 """
-    
+            
             # Add top categories dynamically
             for i, (category, count) in enumerate(top_categories.items(), 1):
                 results_text += f"{i}. {category} - {count} shapes\n"
@@ -1262,7 +1302,7 @@ EMBEDDING QUALITY:
 💡 Well-separated clusters indicate good feature quality!
 Currently viewing: {self.mesh_var.get() if self.mesh_var.get() != "Select mesh..." else "No mesh selected"}
 """
-    
+            
             self.results_text.delete(1.0, END)
             self.results_text.insert(1.0, results_text)
             
@@ -1283,6 +1323,7 @@ Currently viewing: {self.mesh_var.get() if self.mesh_var.get() != "Select mesh..
         
         try:
             # SET DETERMINISTIC BEHAVIOR
+            import numpy as np
             np.random.seed(42)  # Fixed seed for consistency
             
             self.status_label.config(text="🔄 Comparing Step 4 vs Step 5 methods...", fg="blue")
@@ -1301,12 +1342,6 @@ Currently viewing: {self.mesh_var.get() if self.mesh_var.get() != "Select mesh..
             
             # Step 5: Compute using KNN WITH STEP 4 NORMALIZATION
             if not self.initialize_step5_engines():
-                return
-            
-            # REBUILD KNN INDEX WITH STEP 4 NORMALIZATION
-            print("🔧 Rebuilding KNN index with Step 4 normalization...")
-            if not self.knn_engine.build_index(n_neighbors=50, metric='euclidean', use_step4_normalization=True):
-                messagebox.showerror("Error", "Failed to rebuild KNN index!")
                 return
             
             # Find query index
@@ -1339,7 +1374,7 @@ Currently viewing: {self.mesh_var.get() if self.mesh_var.get() != "Select mesh..
             print(f"  Step 4 distance range: {min([r['distance'] for r in step4_results]):.4f} - {max([r['distance'] for r in step4_results]):.4f}")
             if len(knn_results_df) > 0:
                 print(f"  Step 5 distance range: {knn_results_df['distance'].min():.4f} - {knn_results_df['distance'].max():.4f}")
-        
+            
         except Exception as e:
             messagebox.showerror("Error", f"Method comparison failed:\n{str(e)}")
             self.status_label.config(text="❌ Method comparison failed", fg="red")
@@ -1407,8 +1442,6 @@ TOP 10 RESULTS COMPARISON:
         self.results_text.delete(1.0, END)
         self.results_text.insert(1.0, results_text)
 
-
-# Add this at the very end of your shape_retrieval_gui.py file:
 
 def main():
     """Main function to run the GUI application"""
