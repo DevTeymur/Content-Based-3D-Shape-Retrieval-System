@@ -55,6 +55,8 @@ def step2(logs=0, display=True):
         (df["num_faces"] - avg_faces)**2
     )
     avg_shape_row = df.loc[df["dist_to_avg"].idxmin()]
+    # Print how many vertices and faces the average shape has
+    print(f"Average shape - Vertices: {avg_shape_row['num_vertices']}, Faces: {avg_shape_row['num_faces']}")
     avg_shape_path = avg_shape_row["file"] 
 
     # Load and visualize with Open3D
@@ -67,7 +69,9 @@ def step2(logs=0, display=True):
 
     # Outlier with fewest and most vertices
     min_shape, max_shape = df.loc[df["num_vertices"].idxmin()], df.loc[df["num_vertices"].idxmax()]
-
+    # Print how many vertices and faces the min and max shapes have
+    print(f"Min shape - Vertices: {min_shape['num_vertices']}, Faces: {min_shape['num_faces']}")
+    print(f"Max shape - Vertices: {max_shape['num_vertices']}, Faces: {max_shape['num_faces']}")    
     # Visualize outliers
     # for shape in [min_shape, max_shape]:
     #     show_mesh_simple(read_data(shape["file"])) if display else None
@@ -75,7 +79,7 @@ def step2(logs=0, display=True):
     print("Plotting histograms...", end=" ")
     # plot_histograms(df, step='2_2') if display else None
     print("done")
-
+    exit()
 
     # Step 2.3
     print("---------Resampling step---------")
@@ -277,7 +281,7 @@ def step3(logs=0, display=True):
 
 
 logs = 1  # 0: no logs, 1: some logs, 2: detailed logs
-step = 3
+step = 2
 display = True  # Whether to display meshes or not
 
 

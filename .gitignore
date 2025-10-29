@@ -3,3 +3,6 @@ resampled_data
 normalized_data
 .DS_Store
 report.py
+step5_results
+step6_results
+prompt.txt

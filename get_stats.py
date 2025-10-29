@@ -136,8 +136,14 @@ def calculate_avg_without_outliers(df, column="num_vertices"):
 
 
 if __name__ == "__main__":
-    all_data = extract_stats(logs=False)
-    df = pd.DataFrame(all_data)
-    print(df.head())
-    df.to_csv("stats.csv", index=False)
+    # all_data = extract_stats(logs=False)
+    # df = pd.DataFrame(all_data)
+    # print(df.head())
+    # df.to_csv("stats.csv", index=False)
+
+    df = pd.read_csv("stats/original_stats.csv")
+
+    avg_vertices, avg_faces = compute_averages(df)
+    outliers = detect_outliers(df, avg_vertices, avg_faces, logs=1)
+
     

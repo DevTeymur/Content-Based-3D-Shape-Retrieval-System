@@ -266,23 +266,313 @@ class Step6Analyzer:
         print(f"   • System is {precision_10/0.014:.0f}x better than random (1/69 categories)")
         print(f"   • Evaluated on {self.results['metadata']['num_queries']} queries")
         print(f"   • Database contains {len(self.evaluator.metadata)} shapes in 69 categories")
+    
+    def plot_tp_fp_fn_trends(self):
+        """Create TP/FP/FN trends plot across K values"""
+        if not self.results:
+            print("❌ No evaluation results available")
+            return
+        
+        # Debug first to see what we have
+        self.debug_results_structure()
+        
+        k_values = [1, 5, 10]
+        tp_means = []
+        fp_means = []
+        fn_means = []
+        tp_stds = []
+        fp_stds = []
+        fn_stds = []
+        
+        # Extract TP/FP/FN data for each K
+        for k in k_values:
+            overall_data = self.results['overall_results'][k]
+            
+            # Try different possible key names
+            tps = []
+            fps = []
+            fns = []
+            
+            for item in overall_data:
+                # Check what keys are available
+                available_keys = list(item.keys())
+                print(f"Available keys for K={k}: {available_keys}")
+                
+                # Calculate TP/FP/FN from precision/recall if direct values not available
+                if 'tp' in item:
+                    tps.append(item['tp'])
+                    fps.append(item['fp'])
+                    fns.append(item['fn'])
+                elif 'precision' in item and 'recall' in item:
+                    # Calculate from precision and recall
+                    precision = item['precision']
+                    recall = item['recall']
+                    
+                    # TP = precision * k (retrieved items that are relevant)
+                    # FP = k - TP (retrieved items that are not relevant)
+                    # Total relevant items for this query = TP / recall
+                    # FN = total_relevant - TP
+                    
+                    tp = precision * k
+                    fp = k - tp
+                    
+                    if recall > 0:
+                        total_relevant = tp / recall
+                        fn = total_relevant - tp
+                    else:
+                        fn = 0  # If recall is 0, no relevant items exist
+                    
+                    tps.append(tp)
+                    fps.append(fp)
+                    fns.append(fn)
+                else:
+                    print(f"❌ Cannot calculate TP/FP/FN for item: {item}")
+                    return
+            
+            if not tps:
+                print(f"❌ No TP/FP/FN data available for K={k}")
+                return
+            
+            tp_means.append(np.mean(tps))
+            fp_means.append(np.mean(fps))
+            fn_means.append(np.mean(fns))
+            
+            tp_stds.append(np.std(tps))
+            fp_stds.append(np.std(fps))
+            fn_stds.append(np.std(fns))
+        
+        # Create the plot
+        plt.figure(figsize=(10, 6))
+        
+        x = np.array(k_values)
+        width = 0.25
+        
+        # Plot bars with error bars
+        plt.bar(x - width, tp_means, width, label='True Positives (TP)', 
+                color='green', alpha=0.7, yerr=tp_stds, capsize=5)
+        plt.bar(x, fp_means, width, label='False Positives (FP)', 
+                color='red', alpha=0.7, yerr=fp_stds, capsize=5)
+        plt.bar(x + width, fn_means, width, label='False Negatives (FN)', 
+                color='orange', alpha=0.7, yerr=fn_stds, capsize=5)
+        
+        # Customize plot
+        plt.xlabel('K Value')
+        plt.ylabel('Count (Mean ± Std)')
+        plt.title('Trends of True Positives, False Positives, and False Negatives across K values')
+        plt.xticks(k_values)
+        plt.legend()
+        plt.grid(True, alpha=0.3, axis='y')
+        
+        # Add value labels on bars
+        for i, k in enumerate(k_values):
+            plt.text(k - width, tp_means[i] + tp_stds[i] + 0.1, 
+                    f'{tp_means[i]:.2f}', ha='center', va='bottom', fontsize=9)
+            plt.text(k, fp_means[i] + fp_stds[i] + 0.1, 
+                    f'{fp_means[i]:.2f}', ha='center', va='bottom', fontsize=9)
+            plt.text(k + width, fn_means[i] + fn_stds[i] + 0.1, 
+                    f'{fn_means[i]:.2f}', ha='center', va='bottom', fontsize=9)
+        
+        plt.tight_layout()
+        
+        # Save plot
+        results_dir = self.data_path / "step6_results"
+        results_dir.mkdir(exist_ok=True)
+        plt.savefig(results_dir / "tp_fp_fn_trends.png", dpi=300, bbox_inches='tight')
+        plt.show()
+        
+        print("📈 TP/FP/FN trends plot saved")
+    
+    def plot_all_categories_precision10(self):
+        """Create comprehensive category-wise Precision@10 plot for all 69 categories"""
+        if not self.summary:
+            print("❌ No summary statistics available")
+            return
+        
+        # Get all category data
+        category_data = []
+        category_summary = self.summary['category_summary']
+        
+        for category, stats in category_summary.items():
+            if 'precision@10' in stats:
+                category_data.append({
+                    'Category': category,
+                    'Precision@10': stats['precision@10']['mean'],
+                    'Query Count': stats['precision@10']['count']
+                })
+        
+        if not category_data:
+            print("❌ No precision@10 data available")
+            return
+        
+        df = pd.DataFrame(category_data)
+        df_sorted = df.sort_values('Precision@10', ascending=False)
+        
+        # Create the plot
+        plt.figure(figsize=(16, 10))
+        
+        # Color-code bars based on performance
+        colors = []
+        for precision in df_sorted['Precision@10']:
+            if precision >= 0.8:
+                colors.append('darkgreen')  # High performance
+            elif precision >= 0.5:
+                colors.append('orange')     # Medium performance
+            else:
+                colors.append('red')        # Low performance
+        
+        bars = plt.bar(range(len(df_sorted)), df_sorted['Precision@10'], 
+                       color=colors, alpha=0.8, edgecolor='black', linewidth=0.5)
+        
+        # Customize plot
+        plt.xlabel('Category')
+        plt.ylabel('Precision@10')
+        plt.title('Category-wise Precision@10 across all 69 categories')
+        plt.xticks(range(len(df_sorted)), df_sorted['Category'], 
+                   rotation=90, ha='right', fontsize=8)
+        plt.grid(True, alpha=0.3, axis='y')
+        
+        # Add horizontal reference lines
+        plt.axhline(y=0.8, color='darkgreen', linestyle='--', alpha=0.5, label='High (≥0.8)')
+        plt.axhline(y=0.5, color='orange', linestyle='--', alpha=0.5, label='Medium (≥0.5)')
+        plt.axhline(y=1/69, color='black', linestyle=':', alpha=0.7, label='Random (1/69)')
+        
+        # Add legend for performance levels
+        plt.legend(loc='upper right')
+        
+        # Add summary statistics as text
+        high_count = sum(1 for p in df_sorted['Precision@10'] if p >= 0.8)
+        medium_count = sum(1 for p in df_sorted['Precision@10'] if p >= 0.5 and p < 0.8)
+        low_count = len(df_sorted) - high_count - medium_count
+        
+        plt.text(0.02, 0.98, f'High: {high_count} categories\nMedium: {medium_count} categories\nLow: {low_count} categories', 
+                 transform=plt.gca().transAxes, verticalalignment='top', 
+                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+        
+        plt.tight_layout()
+        
+        # Save plot
+        results_dir = self.data_path / "step6_results"
+        results_dir.mkdir(exist_ok=True)
+        plt.savefig(results_dir / "categorywise_precision10.png", dpi=300, bbox_inches='tight')
+        plt.show()
+        
+        print("📊 Category-wise Precision@10 plot saved")
+        
+        return df_sorted
+    
+    def generate_tp_fp_fn_table_data(self):
+        """Generate TP/FP/FN statistics table data"""
+        if not self.results:
+            print("❌ No evaluation results available")
+            return None
+        
+        k_values = [1, 5, 10]
+        table_data = []
+        
+        for k in k_values:
+            overall_data = self.results['overall_results'][k]
+            
+            tps = []
+            fps = []
+            fns = []
+            
+            for item in overall_data:
+                if 'tp' in item:
+                    tps.append(item['tp'])
+                    fps.append(item['fp']) 
+                    fns.append(item['fn'])
+                elif 'precision' in item and 'recall' in item:
+                    # Calculate from precision and recall
+                    precision = item['precision']
+                    recall = item['recall']
+                    
+                    tp = precision * k
+                    fp = k - tp
+                    
+                    if recall > 0:
+                        total_relevant = tp / recall
+                        fn = total_relevant - tp
+                    else:
+                        fn = 0
+                    
+                    tps.append(tp)
+                    fps.append(fp)
+                    fns.append(fn)
+            
+            if tps:
+                table_data.append({
+                    'K': k,
+                    'TP (Mean ± Std)': f"{np.mean(tps):.2f} ± {np.std(tps):.2f}",
+                    'FP (Mean ± Std)': f"{np.mean(fps):.2f} ± {np.std(fps):.2f}",
+                    'FN (Mean ± Std)': f"{np.mean(fns):.2f} ± {np.std(fns):.2f}"
+                })
+        
+        if table_data:
+            df = pd.DataFrame(table_data)
+            print("\n📊 TP/FP/FN STATISTICS TABLE")
+            print("=" * 80)
+            print(df.to_string(index=False))
+            return df
+        else:
+            print("❌ No TP/FP/FN data could be calculated")
+            return None
+    
+    def debug_results_structure(self):
+        """Debug the structure of results to understand available keys"""
+        if not self.results:
+            print("❌ No evaluation results available")
+            return
+        
+        print("🔍 DEBUGGING RESULTS STRUCTURE")
+        print("=" * 50)
+        
+        # Check top-level keys
+        print("Top-level keys:", list(self.results.keys()))
+        
+        # Check what's in overall_results
+        if 'overall_results' in self.results:
+            print("overall_results keys:", list(self.results['overall_results'].keys()))
+            
+            # Check structure of first K value
+            k = list(self.results['overall_results'].keys())[0]
+            print(f"Structure for K={k}:")
+            
+            first_item = self.results['overall_results'][k][0]
+            print("First item keys:", list(first_item.keys()))
+            print("First item sample:", first_item)
+        
+        # Check if there's category_results
+        if 'category_results' in self.results:
+            print("category_results keys:", list(self.results['category_results'].keys()))
 
 def main():
-    """Run full Step 6 analysis"""
+    """Run full Step 6 analysis with all figures"""
     analyzer = Step6Analyzer("step5_data")
     
     # Run evaluation
     if analyzer.run_full_evaluation(max_queries=200, k_values=[1, 5, 10]):
         
-        # Generate analysis
+        # Generate existing analysis
         analyzer.create_performance_table()
         analyzer.create_category_ranking(k=10, metric='precision', top_n=10)
         analyzer.plot_performance_distribution(k=10)
         analyzer.plot_category_performance(k=10, metric='precision', top_n=15)
+        
+        # Generate missing figures for your report
+        print("\n🎨 Generating missing figures for report...")
+        
+        # This one should work
+        analyzer.plot_all_categories_precision10()  # For categorywise_precision10.png
+        
+        # Debug and try TP/FP/FN
+        print("\n🔍 Attempting TP/FP/FN analysis...")
+        analyzer.plot_tp_fp_fn_trends()             # For tp_fp_fn_trends.png
+        analyzer.generate_tp_fp_fn_table_data()     # For table data verification
+        
         analyzer.generate_report_summary()
         
         print("\n✅ Step 6 analysis completed!")
-        print("📁 Check step5_data/step6_results/ for saved plots and data")
+        print("📁 Check step5_data/step6_results/ for generated plots")
     else:
         print("❌ Analysis failed")
 
