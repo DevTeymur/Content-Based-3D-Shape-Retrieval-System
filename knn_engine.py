@@ -91,18 +91,33 @@ class KNNEngine:
             
             # APPLY STEP 4 STYLE NORMALIZATION ONLY IF REQUESTED
             if use_step4_normalization:
-                print("🔧 Applying Step 4 z-score normalization...")
+                print("🔧 Applying feature-type-specific normalization (MATCHING STEP 4)...")
                 
-                # Z-score standardization (same as Step 4)
-                means = np.mean(self.X_features, axis=0)
-                stds = np.std(self.X_features, axis=0)
-                stds[stds == 0] = 1  # Avoid division by zero
+                # MATCH STEP 4 EXACTLY: 7 scalar + 50 histogram
+                n_scalar = 7  # Only basic scalar features
+                n_histogram = 50  # 10 bins × 5 descriptors
                 
-                # Apply standardization
-                self.X_features_normalized = (self.X_features - means) / stds
-                print(f"   Z-score normalized range: [{self.X_features_normalized.min():.3f}, {self.X_features_normalized.max():.3f}]")
+                print(f"   📊 Feature split: {n_scalar} scalar + {n_histogram} histogram = {n_scalar + n_histogram} total")
                 
-                # Use normalized features for KNN
+                # Split features
+                scalar_features = self.X_features[:, :n_scalar]
+                histogram_features = self.X_features[:, n_scalar:]
+                
+                # Z-SCORE NORMALIZE ONLY SCALAR FEATURES
+                scalar_means = np.mean(scalar_features, axis=0)
+                scalar_stds = np.std(scalar_features, axis=0)
+                scalar_stds[scalar_stds == 0] = 1  # Avoid division by zero
+                scalar_normalized = (scalar_features - scalar_means) / scalar_stds
+                
+                # KEEP HISTOGRAM FEATURES AS-IS (unchanged!)
+                histogram_normalized = histogram_features
+                
+                # CONCATENATE BACK
+                self.X_features_normalized = np.hstack([scalar_normalized, histogram_normalized])
+                
+                print(f"   ✅ Scalar features z-normalized: {n_scalar} features")
+                print(f"   ✅ Histogram features unchanged: {n_histogram} bins")
+                
                 features_for_knn = self.X_features_normalized
             else:
                 # Use original features (already normalized from preparation)
@@ -141,9 +156,9 @@ class KNNEngine:
         """
         Perform K-nearest neighbors search - DEBUG VERSION
         """
-        print(f"\n🔍 === KNN SEARCH DEBUG ===")
-        print(f"Query Index: {query_shape_index}")
-        print(f"Requested K: {k}")
+        # print(f"\n🔍 === KNN SEARCH DEBUG ===")
+        # print(f"Query Index: {query_shape_index}")
+        # print(f"Requested K: {k}")
         
         if not self.is_fitted:
             print("❌ KNN index not built. Please call build_index() first")
@@ -165,15 +180,15 @@ class KNNEngine:
             distances = distances[0]  # Remove batch dimension
             indices = indices[0]      # Remove batch dimension
             
-            print(f"✅ KNN returned exactly {len(distances)} results")
-            print(f"   Distance range: [{distances.min():.4f}, {distances.max():.4f}]")
-            print(f"   Query time: {query_time:.4f}s")
+            # print(f"✅ KNN returned exactly {len(distances)} results")
+            # print(f"   Distance range: [{distances.min():.4f}, {distances.max():.4f}]")
+            # print(f"   Query time: {query_time:.4f}s")
             
             # Convert to results DataFrame (already sorted by sklearn)
             results = self._create_results_dataframe(indices, distances, query_time)
             
-            print(f"🔍 K-NN search completed: {k} neighbors in {query_time:.4f}s")
-            print(f"=== END KNN SEARCH DEBUG ===\n")
+            # print(f"🔍 K-NN search completed: {k} neighbors in {query_time:.4f}s")
+            # print(f"=== END KNN SEARCH DEBUG ===\n")
             return results
             
         except Exception as e:

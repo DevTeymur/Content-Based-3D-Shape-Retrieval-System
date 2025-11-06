@@ -19,8 +19,8 @@ class Step6Analyzer:
         self.results = None
         self.summary = None
         
-    def run_full_evaluation(self, max_queries=500, k_values=[1, 5, 10]):
-        """Run comprehensive evaluation on larger subset"""
+    def run_full_evaluation(self, max_queries=None, k_values=[1, 5, 10]):
+        """Run comprehensive evaluation on all shapes"""
         print("🚀 Running comprehensive CBSR evaluation...")
         
         # Initialize evaluator
@@ -28,10 +28,15 @@ class Step6Analyzer:
             print("❌ Failed to initialize evaluator")
             return False
         
+        # Determine number of queries
+        total_shapes = len(self.evaluator.metadata)
+        num_queries = total_shapes if max_queries is None else min(max_queries, total_shapes)
+        
+        print(f"📊 Evaluating {num_queries} queries out of {total_shapes} total shapes")
+        
         # Run evaluation
-        print(f"📊 Evaluating {max_queries} queries...")
         self.results = self.evaluator.evaluate_subset(
-            max_queries=max_queries, 
+            max_queries=num_queries, 
             k_values=k_values,
             random_seed=42
         )
@@ -40,8 +45,11 @@ class Step6Analyzer:
             print("❌ Evaluation failed")
             return False
         
-        # Compute summary statistics
+        # Compute regular summary statistics
         self.summary = self.evaluator.compute_summary_statistics()
+        
+        # ✅ NEW: Compute class-balanced metrics
+        self.balanced_metrics = self.evaluator.compute_class_balanced_metrics()
         
         # Save results
         self._save_results()
@@ -56,7 +64,6 @@ class Step6Analyzer:
         
         # Save raw results
         with open(results_dir / "evaluation_results.json", 'w') as f:
-            # Convert numpy types to native Python for JSON serialization
             json_results = self._convert_numpy_types(self.results)
             json.dump(json_results, f, indent=2)
         
@@ -64,6 +71,12 @@ class Step6Analyzer:
         with open(results_dir / "summary_statistics.json", 'w') as f:
             json_summary = self._convert_numpy_types(self.summary)
             json.dump(json_summary, f, indent=2)
+        
+        # ✅ NEW: Save class-balanced metrics
+        if hasattr(self, 'balanced_metrics'):
+            with open(results_dir / "class_balanced_metrics.json", 'w') as f:
+                json_balanced = self._convert_numpy_types(self.balanced_metrics)
+                json.dump(json_balanced, f, indent=2)
         
         print(f"💾 Results saved to {results_dir}")
     
@@ -241,12 +254,21 @@ class Step6Analyzer:
         print("\n📝 STEP 6 EVALUATION REPORT SUMMARY")
         print("=" * 80)
         
-        # Overall performance
-        print("\n🎯 OVERALL SYSTEM PERFORMANCE:")
+        # Overall performance (STANDARD - all queries equally weighted)
+        print("\n🎯 OVERALL PERFORMANCE (All queries equally weighted):")
         for k in [1, 5, 10]:
             precision = self.summary[f'overall_precision@{k}']['mean']
             recall = self.summary[f'overall_recall@{k}']['mean']
             print(f"   Precision@{k}: {precision:.3f} | Recall@{k}: {recall:.3f}")
+        
+        # ✅ NEW: Class-balanced performance
+        if hasattr(self, 'balanced_metrics') and self.balanced_metrics:
+            print("\n⚖️  CLASS-BALANCED PERFORMANCE (Each category weighted equally):")
+            for k in [1, 5, 10]:
+                precision = self.balanced_metrics[k]['balanced_precision']
+                recall = self.balanced_metrics[k]['balanced_recall']
+                num_categories = self.balanced_metrics[k]['num_categories']
+                print(f"   Precision@{k}: {precision:.3f} | Recall@{k}: {recall:.3f} ({num_categories} categories)")
         
         # Best performing categories
         print("\n🏆 TOP PERFORMING CATEGORIES (Precision@10):")
@@ -263,7 +285,13 @@ class Step6Analyzer:
         print(f"\n💡 KEY INSIGHTS:")
         print(f"   • Perfect top-1 accuracy: {precision_1:.1%}")
         print(f"   • Strong top-10 relevance: {precision_10:.1%}")
-        print(f"   • System is {precision_10/0.014:.0f}x better than random (1/69 categories)")
+        
+        # ✅ NEW: Compare standard vs balanced
+        if hasattr(self, 'balanced_metrics'):
+            balanced_p10 = self.balanced_metrics[10]['balanced_precision']
+            diff = abs(precision_10 - balanced_p10)
+            print(f"   • Class imbalance impact: {diff:.3f} difference (standard vs balanced)")
+        
         print(f"   • Evaluated on {self.results['metadata']['num_queries']} queries")
         print(f"   • Database contains {len(self.evaluator.metadata)} shapes in 69 categories")
     
@@ -296,7 +324,7 @@ class Step6Analyzer:
             for item in overall_data:
                 # Check what keys are available
                 available_keys = list(item.keys())
-                print(f"Available keys for K={k}: {available_keys}")
+                # print(f"Available keys for K={k}: {available_keys}")
                 
                 # Calculate TP/FP/FN from precision/recall if direct values not available
                 if 'tp' in item:
@@ -550,7 +578,7 @@ def main():
     analyzer = Step6Analyzer("step5_data")
     
     # Run evaluation
-    if analyzer.run_full_evaluation(max_queries=200, k_values=[1, 5, 10]):
+    if analyzer.run_full_evaluation(max_queries=None, k_values=[1, 5, 10]):
         
         # Generate existing analysis
         analyzer.create_performance_table()

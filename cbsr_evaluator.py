@@ -356,6 +356,60 @@ class CBSREvaluator:
         
         print(f"\nOVERALL AVERAGE M_avg = {mavg:.3f}")
         print(f"Computed as: Σ M(all queries) / |DB| = sum of all precisions / total queries")
+    
+    def compute_class_balanced_metrics(self):
+        """
+        Compute metrics with class balancing
+        Each category gets equal weight regardless of size
+        """
+        if not self.evaluation_results:  # ✅ FIX: was self.results
+            return None
+        
+        print("\n🎯 Computing class-balanced metrics...")
+        
+        # Group results by category
+        category_metrics = {}
+        
+        k_values = self.evaluation_results['metadata']['k_values']  # ✅ FIX: get from metadata
+        
+        for k in k_values:
+            category_precisions = {}
+            category_recalls = {}
+            
+            # For each query, group by its category
+            for result in self.evaluation_results['overall_results'][k]:  # ✅ FIX: was self.results
+                query_category = result['category']  # ✅ FIX: the key is 'category' not 'query_category'
+                
+                if query_category not in category_precisions:
+                    category_precisions[query_category] = []
+                    category_recalls[query_category] = []
+                
+                category_precisions[query_category].append(result['precision'])
+                category_recalls[query_category].append(result['recall'])
+            
+            # Compute mean per category (each category weighted equally)
+            category_mean_precisions = []
+            category_mean_recalls = []
+            
+            for category in category_precisions.keys():
+                category_mean_precisions.append(np.mean(category_precisions[category]))
+                category_mean_recalls.append(np.mean(category_recalls[category]))
+            
+            # Overall class-balanced metrics (mean of category means)
+            balanced_precision = np.mean(category_mean_precisions)
+            balanced_recall = np.mean(category_mean_recalls)
+            
+            category_metrics[k] = {
+                'balanced_precision': balanced_precision,
+                'balanced_recall': balanced_recall,
+                'num_categories': len(category_precisions),
+                'per_category_precision': dict(zip(category_precisions.keys(), category_mean_precisions)),
+                'per_category_recall': dict(zip(category_recalls.keys(), category_mean_recalls))
+            }
+            
+            print(f"   K={k}: Balanced Precision={balanced_precision:.3f}, Balanced Recall={balanced_recall:.3f}")
+        
+        return category_metrics
         
 
 # Test function to verify the implementation

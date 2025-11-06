@@ -60,42 +60,55 @@ class ShapeRetrievalGUI:
         control_frame = Frame(main_frame)
         control_frame.pack(fill=X, pady=(0, 10))
         
-        # Load Data button
-        self.load_btn = Button(control_frame, text="Load Data", 
-                            command=self.load_data, bg="lightblue")
-        self.load_btn.pack(side=LEFT, padx=(0, 5))
-        
         # Compute Stats button  
         self.stats_btn = Button(control_frame, text="Compute Stats",
-                            command=self.compute_stats, bg="lightgreen")
+                            command=self.compute_stats, bg="lightgreen",
+                            font=("Arial", 9))
         self.stats_btn.pack(side=LEFT, padx=5)
         
         # Mesh Info button
         self.mesh_info_btn = Button(control_frame, text="Mesh Info",
-                                command=self.show_mesh_info, bg="lightcyan")
+                            command=self.show_mesh_info, bg="lightcyan",
+                            font=("Arial", 9))
         self.mesh_info_btn.pack(side=LEFT, padx=5)
         
-        # NEW: Visualize Mesh button (single mesh)
-        self.viz_mesh_btn = Button(control_frame, text="View Mesh",
-                                command=self.visualize_single_mesh, bg="lightpink")
-        self.viz_mesh_btn.pack(side=LEFT, padx=5)
+        # NEW: View Plot button (Matplotlib - static)
+        self.view_plot_btn = Button(control_frame, text="View Plot",
+                               command=self.view_mesh_matplotlib,
+                               bg="lightyellow", font=("Arial", 9, "bold"))
+        self.view_plot_btn.pack(side=LEFT, padx=5)
+        
+        # NEW: View 3D button (Open3D - interactive)
+        self.view_3d_btn = Button(control_frame, text="View 3D",
+                             command=self.view_mesh_open3d,
+                             bg="lightpink", font=("Arial", 9, "bold"))
+        self.view_3d_btn.pack(side=LEFT, padx=5)
         
         # Compute Distances button
         self.distance_btn = Button(control_frame, text="Compute Distances",
-                                command=self.compute_distances, bg="lightyellow")
+                            command=self.compute_distances, bg="lightblue",
+                            font=("Arial", 9))
         self.distance_btn.pack(side=LEFT, padx=5)
         
-        # Visualize Similar button (renamed for clarity)
+        # Visualize Similar button
         self.viz_similar_btn = Button(control_frame, text="View Similar",
-                                    command=self.visualize_results, bg="lightcoral")
+                                command=self.visualize_results, bg="lightcoral",
+                                font=("Arial", 9))
         self.viz_similar_btn.pack(side=LEFT, padx=5)
         
-        # Export button
-        self.export_btn = Button(control_frame, text="Export Results",
-                                command=self.export_results, bg="lightgray")
-        self.export_btn.pack(side=LEFT, padx=(5, 0))
-        
+        # Search box frame
+        # search_frame = Frame(control_frame)
+        # search_frame.pack(side=LEFT, padx=5)
 
+        # Label(search_frame, text="🔍", font=("Arial", 10)).pack(side=LEFT)
+        # self.search_var = StringVar()
+        # self.search_entry = Entry(search_frame, textvariable=self.search_var, width=15)
+        # self.search_entry.pack(side=LEFT, padx=2)
+        # self.search_entry.bind('<Return>', lambda e: self.search_mesh())
+
+        # search_btn = Button(search_frame, text="Find", command=self.search_mesh, 
+        #                bg="lightgreen", font=("Arial", 9))
+        # search_btn.pack(side=LEFT, padx=2)
         
         # Status label
         self.status_label = Label(main_frame, text="Ready to load data...", 
@@ -199,6 +212,122 @@ class ShapeRetrievalGUI:
         # Performance info label
         self.performance_label = Label(step5_frame, text="", fg="darkgreen", font=("Arial", 8))
         self.performance_label.pack(anchor=W, pady=(2, 0))
+        
+        # Search box frame 
+        search_frame = Frame(control_frame)
+        search_frame.pack(side=LEFT, padx=5)
+
+        Label(search_frame, text="🔍", font=("Arial", 10)).pack(side=LEFT)
+        self.search_var = StringVar()
+        self.search_entry = Entry(search_frame, textvariable=self.search_var, width=15)
+        self.search_entry.pack(side=LEFT, padx=2)
+        self.search_entry.bind('<Return>', lambda e: self.search_mesh())  # Search on Enter key
+
+        search_btn = Button(search_frame, text="Find", command=self.search_mesh, 
+                           bg="lightgreen", font=("Arial", 9))
+        search_btn.pack(side=LEFT, padx=2)
+
+    def search_mesh(self):
+        """Search for a mesh by filename"""
+        if self.features_df is None:
+            messagebox.showwarning("No Data", "Please load data first!")
+            return
+        
+        search_term = self.search_var.get().strip()
+        
+        if not search_term:
+            messagebox.showwarning("Empty Search", "Please enter a filename to search!")
+            return
+        
+        # Search for matching filenames (case-insensitive, partial match)
+        matches = self.features_df[
+            self.features_df['filename'].str.contains(search_term, case=False, na=False)
+        ]
+        
+        if len(matches) == 0:
+            messagebox.showinfo("Not Found", f"No meshes found matching '{search_term}'")
+            self.status_label.config(text=f"❌ No results for '{search_term}'", fg="red")
+            return
+        
+        if len(matches) == 1:
+            # Exact match found - select it
+            found_filename = matches.iloc[0]['filename']
+            self.mesh_var.set(found_filename)
+            
+            mesh_row = matches.iloc[0]
+            self.selected_info.config(
+                text=f"📁 {mesh_row['category']} | 📄 {found_filename}"
+            )
+            self.status_label.config(
+                text=f"✅ Found and selected: {found_filename}", fg="green"
+            )
+            
+            # Auto-show mesh info
+            self.show_mesh_info()
+            
+        else:
+            # Multiple matches - show selection dialog
+            self._show_search_results(matches, search_term)
+
+    def _show_search_results(self, matches, search_term):
+        """Show dialog with multiple search results"""
+        result_window = Toplevel(self.root)
+        result_window.title(f"Search Results: '{search_term}'")
+        result_window.geometry("500x400")
+        result_window.transient(self.root)
+        result_window.grab_set()
+        
+        Label(result_window, text=f"Found {len(matches)} matches for '{search_term}':",
+            font=("Arial", 12, "bold")).pack(pady=10)
+        
+        # Create listbox with scrollbar
+        list_frame = Frame(result_window)
+        list_frame.pack(fill=BOTH, expand=True, padx=10, pady=10)
+        
+        scrollbar = Scrollbar(list_frame)
+        scrollbar.pack(side=RIGHT, fill=Y)
+        
+        listbox = Listbox(list_frame, yscrollcommand=scrollbar.set, 
+                        font=("Courier", 10))
+        scrollbar.config(command=listbox.yview)
+        listbox.pack(fill=BOTH, expand=True)
+        
+        # Populate listbox
+        for _, row in matches.iterrows():
+            listbox.insert(END, f"{row['filename']:<25} ({row['category']})")
+        
+        # Selection handler
+        def on_select():
+            selection = listbox.curselection()
+            if selection:
+                idx = selection[0]
+                selected_row = matches.iloc[idx]
+                
+                # Update main GUI
+                self.mesh_var.set(selected_row['filename'])
+                self.selected_info.config(
+                    text=f"📁 {selected_row['category']} | 📄 {selected_row['filename']}"
+                )
+                
+                result_window.destroy()
+                
+                self.status_label.config(
+                    text=f"✅ Selected: {selected_row['filename']}", fg="green"
+                )
+                
+                # Auto-show mesh info
+                self.show_mesh_info()
+        
+        # Buttons
+        btn_frame = Frame(result_window)
+        btn_frame.pack(pady=10)
+        
+        Button(btn_frame, text="Select", command=on_select, 
+            bg="lightgreen").pack(side=LEFT, padx=5)
+        Button(btn_frame, text="Cancel", command=result_window.destroy).pack(side=LEFT, padx=5)
+        
+        # Double-click to select
+        listbox.bind('<Double-Button-1>', lambda e: on_select())
     
     def auto_load_default_data(self):
         """Try to automatically load the default features database"""
@@ -772,8 +901,8 @@ ALL 57 FEATURES:
             messagebox.showerror("Error", f"Failed to display mesh info:\n{str(e)}")
             self.status_label.config(text="❌ Failed to display mesh info", fg="red")
 
-    def visualize_single_mesh(self):
-        """Visualize the selected mesh in a new window"""
+    def view_mesh_matplotlib(self):
+        """View mesh using Matplotlib static plot"""
         if self.features_df is None:
             messagebox.showwarning("No Data", "Please load data first!")
             return
@@ -782,48 +911,73 @@ ALL 57 FEATURES:
             messagebox.showwarning("No Selection", "Please select a mesh first!")
             return
         
+        query_mesh_path = self.get_query_mesh_path()
+        
+        if query_mesh_path is None:
+            messagebox.showerror("Error", "Could not find mesh file!")
+            return
+        
         try:
-            self.status_label.config(text="🔄 Loading mesh visualization...", fg="blue")
+            from plots import show_mesh_simple
             
-            # Get query mesh path
-            query_mesh_path = self.get_query_mesh_path()
-            
-            if query_mesh_path is None:
-                messagebox.showerror("Error", "Could not find mesh file!")
-                return
-            
-            # Import your existing visualization function
-            from plots import show_mesh_simple  # or whatever function you have
-            
-            print(f"🎯 Visualizing mesh: {query_mesh_path}")
-            
-            # Show the single mesh
+            self.status_label.config(text="🔄 Loading Matplotlib plot...", fg="blue")
             show_mesh_simple(query_mesh_path)
-            
-            self.status_label.config(text="✅ Mesh visualization opened!", fg="green")
-            
-            # Update text area with mesh info
-            selected_filename = self.mesh_var.get()
-            mesh_row = self.features_df[self.features_df['filename'] == selected_filename].iloc[0]
-            
-            viz_text = f"""MESH VISUALIZATION
-{'=' * 40}
-📄 Filename: {mesh_row['filename']}
-📁 Category: {mesh_row['category']}
-📂 Path: {query_mesh_path}
-
-✅ Mesh displayed in new matplotlib window
-💡 Close the window when done viewing
-"""
-            
-            self.results_text.delete(1.0, END)
-            self.results_text.insert(1.0, viz_text)
-            
+            self.status_label.config(text="✅ Matplotlib plot opened!", fg="green")
+        
         except Exception as e:
-            error_msg = f"Failed to visualize mesh:\n{str(e)}"
-            messagebox.showerror("Error", error_msg)
-            self.status_label.config(text="❌ Mesh visualization failed", fg="red")
-            print(f"Visualization error: {e}")
+            messagebox.showerror("Error", f"Matplotlib visualization failed:\n{str(e)}")
+            self.status_label.config(text="❌ Visualization failed", fg="red")
+
+    def view_mesh_open3d(self):
+        """View mesh using Open3D interactive viewer"""
+        if self.features_df is None:
+            messagebox.showwarning("No Data", "Please load data first!")
+            return
+        
+        if self.mesh_var.get() == "Select mesh...":
+            messagebox.showwarning("No Selection", "Please select a mesh first!")
+            return
+        
+        query_mesh_path = self.get_query_mesh_path()
+        
+        if query_mesh_path is None:
+            messagebox.showerror("Error", "Could not find mesh file!")
+            return
+        
+        try:
+            import trimesh
+            import open3d as o3d
+            
+            self.status_label.config(text="🔄 Loading Open3D viewer...", fg="blue")
+            
+            # Load mesh with trimesh
+            mesh = trimesh.load(str(query_mesh_path))
+            
+            # Convert to Open3D
+            mesh_o3d = o3d.geometry.TriangleMesh()
+            mesh_o3d.vertices = o3d.utility.Vector3dVector(mesh.vertices)
+            mesh_o3d.triangles = o3d.utility.Vector3iVector(mesh.faces)
+            mesh_o3d.compute_vertex_normals()
+            
+            # Add color for better visualization
+            mesh_o3d.paint_uniform_color([0.7, 0.7, 0.7])
+            
+            # Show interactive viewer
+            print(f"🎯 Open3D Interactive Viewer: {Path(query_mesh_path).name}")
+            o3d.visualization.draw_geometries(
+                [mesh_o3d],
+                window_name=f"3D Viewer - {Path(query_mesh_path).name}",
+                width=800,
+                height=600,
+                mesh_show_back_face=True,
+                mesh_show_wireframe=False
+            )
+            
+            self.status_label.config(text="✅ Open3D viewer opened!", fg="green")
+        
+        except Exception as e:
+            messagebox.showerror("Error", f"Open3D visualization failed:\n{str(e)}")
+            self.status_label.config(text="❌ 3D viewer failed", fg="red")
 
     def browse_by_category(self):
         """Open category browser window"""
@@ -848,6 +1002,7 @@ ALL 57 FEATURES:
         
         tree = ttk.Treeview(tree_frame, yscrollcommand=tree_scroll.set)
         tree_scroll.config(command=tree.yview)
+        tree.pack(fill=BOTH, expand=True)
         
         # Configure treeview columns
         tree['columns'] = ("count", "filename")
@@ -1605,6 +1760,8 @@ Ready to evaluate your CBSR system!"""
             
             self.status_label.config(text="✅ Quick evaluation completed!", fg="green")
             
+
+            
         except Exception as e:
             messagebox.showerror("Error", f"Quick evaluation failed:\n{str(e)}")
             self.status_label.config(text="❌ Quick evaluation failed", fg="red")
@@ -1809,7 +1966,6 @@ SYSTEM PERFORMANCE SUMMARY:
                 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load results:\n{str(e)}")
-
 
 def main():
     root = Tk()

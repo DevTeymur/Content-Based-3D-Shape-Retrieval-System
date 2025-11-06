@@ -289,89 +289,88 @@ class DimensionalityReducer:
         self.fig.canvas.mpl_connect('button_press_event', self._on_click)
     
     def _on_click(self, event):
-        """Handle mouse click events for KNN highlighting"""
-        if event.inaxes != self.ax or event.button != 3:  # Right click only
-            return
-        
-        # Find closest point to click
-        distances = np.sqrt((self.X_2d[:, 0] - event.xdata)**2 + (self.X_2d[:, 1] - event.ydata)**2)
-        closest_index = np.argmin(distances)
-        
-        # Highlight similar shapes using KNN
-        self.highlight_similar_shapes(closest_index, k=10)
+        """Handle click events on the plot"""
+        if event.button == 3:  # Right-click
+            if event.inaxes != self.ax:
+                return
+            
+            # Find closest point
+            distances = np.sqrt((self.X_2d[:, 0] - event.xdata)**2 + 
+                               (self.X_2d[:, 1] - event.ydata)**2)
+            closest_index = np.argmin(distances)
+            
+            # Get the clicked shape's metadata
+            clicked_meta = self.metadata[closest_index]
+            print(f"\n🖱️ Right-clicked: {clicked_meta['filename']} ({clicked_meta['category']})")
+            
+            # Query KNN engine for similar shapes
+            if hasattr(self, 'knn_engine') and self.knn_engine is not None:
+                print(f"🔍 Finding 10 similar shapes...")
+                results = self.knn_engine.query_knn(closest_index, k=10)
+                
+                # ✅ CORRECT: Pass results_df, not index and k
+                self.highlight_similar_shapes(results)
+                
+                # Print results
+                if results is not None and len(results) > 0:
+                    print(f"\n📊 Top 10 similar shapes:")
+                    for _, row in results.head(10).iterrows():
+                        print(f"   {row['rank']}. {row['filename']} ({row['category']}) - dist: {row['distance']:.4f}")
+            else:
+                print("⚠️ KNN engine not available for similarity search")
     
-    def highlight_similar_shapes(self, query_index, k=10):
-        """
-        Highlight K nearest neighbors of a selected shape
-        
-        Args:
-            query_index: Index of the query shape
-            k: Number of similar shapes to highlight
-        """
-        if self.knn_engine is None:
-            print("🔄 Initializing KNN engine for similarity search...")
-            self.knn_engine = KNNEngine(self.data_dir)
-            if not self.knn_engine.load_processed_features():
-                print("❌ Failed to load KNN engine")
-                return
-            if not self.knn_engine.build_index():
-                print("❌ Failed to build KNN index")
-                return
-        
+    def highlight_similar_shapes(self, results_df):
+        """Highlight query results on t-SNE plot"""
         try:
-            # Get similar shapes
-            results = self.knn_engine.query_knn(query_index, k=k)
-            if results is None:
+            # Clear previous highlights
+            if hasattr(self, 'highlight_artists') and self.highlight_artists:
+                for artist in self.highlight_artists:
+                    artist.remove()
+                self.highlight_artists = []
+            else:
+                self.highlight_artists = []
+            
+            if results_df is None or len(results_df) == 0:
+                if hasattr(self, 'fig'):
+                    self.fig.canvas.draw()
                 return
             
-            # Get indices of similar shapes
-            similar_indices = results['database_index'].values
+            # Get filenames from results
+            result_filenames = set(results_df['filename'].tolist())
             
-            # Clear previous highlights
-            self.ax.collections.clear()
+            # Find indices in t-SNE data
+            highlight_indices = []
+            for i, meta in enumerate(self.metadata):
+                if meta['filename'] in result_filenames:
+                    highlight_indices.append(i)
             
-            # Recreate base scatter plot
-            colors = [self.category_colors[label] for label in self.labels]
-            self.scatter = self.ax.scatter(
-                self.X_2d[:, 0], 
-                self.X_2d[:, 1],
-                c=colors,
-                s=20,
-                alpha=0.7,
-                edgecolors='black',
-                linewidth=0.5
+            if not highlight_indices:
+                return
+            
+            # Plot highlighted points
+            highlight_x = self.X_2d[highlight_indices, 0]
+            highlight_y = self.X_2d[highlight_indices, 1]
+            
+            # Add red circles around similar shapes
+            scatter = self.ax.scatter(
+                highlight_x, highlight_y,
+                s=200,
+                facecolors='none',
+                edgecolors='red',
+                linewidths=3,
+                marker='o',
+                zorder=5,
+                label='Query Results'
             )
             
-            # Highlight similar shapes
-            similar_x = self.X_2d[similar_indices, 0]
-            similar_y = self.X_2d[similar_indices, 1]
+            self.highlight_artists.append(scatter)
             
-            # Highlight with larger, brighter points
-            self.ax.scatter(similar_x, similar_y, 
-                          c='red', s=100, alpha=0.9, 
-                          edgecolors='black', linewidth=2,
-                          marker='o', label=f'Top {k} Similar')
+            # Update legend
+            self.ax.legend(loc='upper right', fontsize=8)
             
-            # Highlight query shape specially
-            query_x, query_y = self.X_2d[query_index]
-            self.ax.scatter(query_x, query_y, 
-                          c='blue', s=150, alpha=1.0,
-                          edgecolors='white', linewidth=3,
-                          marker='*', label='Query Shape')
-            
-            # Add legend for highlights
-            self.ax.legend(loc='upper right')
-            
-            # Update plot
             self.fig.canvas.draw()
             
-            # Print information
-            query_meta = self.metadata[query_index]
-            print(f"\n🎯 Highlighted {k} shapes similar to:")
-            print(f"   📄 {query_meta['filename']} ({self.labels[query_index]})")
-            print("   Top 5 similar shapes:")
-            for i, (_, row) in enumerate(results.head().iterrows()):
-                print(f"   {i+1}. {row['filename']} ({row['category']}) - distance: {row['distance']:.3f}")
+            print(f"✅ Highlighted {len(highlight_indices)} similar shapes on t-SNE plot")
             
         except Exception as e:
             print(f"❌ Error highlighting similar shapes: {e}")
