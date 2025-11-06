@@ -16,7 +16,7 @@ def validate_all_normalization_steps(input_dir, normalized_dir, sample_size=None
         sample_size: Number of shapes to validate (None = ALL shapes)
     """
     
-    print("🔍 COMPREHENSIVE NORMALIZATION VALIDATION")
+    print("  COMPREHENSIVE NORMALIZATION VALIDATION")
     print("=" * 60)
     
     # Get list of files to validate
@@ -26,9 +26,9 @@ def validate_all_normalization_steps(input_dir, normalized_dir, sample_size=None
         # Use random sampling if sample_size is specified and smaller than total
         np.random.seed(42)  # For reproducibility
         normalized_files = np.random.choice(normalized_files, sample_size, replace=False).tolist()
-        print(f"📊 Validating {len(normalized_files)} randomly sampled shapes...")
+        print(f"  Validating {len(normalized_files)} randomly sampled shapes...")
     else:
-        print(f"📊 Validating ALL {len(normalized_files)} shapes...")
+        print(f"  Validating ALL {len(normalized_files)} shapes...")
     
     # Storage for validation results
     validation_results = {
@@ -93,26 +93,26 @@ def validate_all_normalization_steps(input_dir, normalized_dir, sample_size=None
 def generate_validation_report(df):
     """Generate statistical validation report"""
     
-    print("\n📋 NORMALIZATION VALIDATION REPORT")
+    print("\n  NORMALIZATION VALIDATION REPORT")
     print("=" * 60)
     
     # Centering validation
     centering_success = np.sum(df['centering_after'] < 1e-6) / len(df)
-    print(f"\n🎯 CENTERING VALIDATION:")
+    print(f"\n  CENTERING VALIDATION:")
     print(f"   Before: Mean distance from origin = {df['centering_before'].mean():.6f}")
     print(f"   After:  Mean distance from origin = {df['centering_after'].mean():.6f}")
     print(f"   Success rate: {centering_success:.1%} within tolerance (1e-6)")
     
     # Scaling validation
     scaling_success = np.sum(np.abs(df['scaling_after'] - 1.0) < 1e-6) / len(df)
-    print(f"\n📏 SCALING VALIDATION:")
+    print(f"\n  SCALING VALIDATION:")
     print(f"   Before: Mean max dimension = {df['scaling_before'].mean():.6f}")
     print(f"   After:  Mean max dimension = {df['scaling_after'].mean():.6f}")
     print(f"   Success rate: {scaling_success:.1%} at unit scale (±1e-6)")
     
     # PCA alignment validation
     pca_success = np.sum(df['pca_alignment_after'] > 0.99) / len(df)  # 99% alignment
-    print(f"\n🔄 PCA ALIGNMENT VALIDATION:")
+    print(f"\n  PCA ALIGNMENT VALIDATION:")
     print(f"   Before: Mean alignment score = {df['pca_alignment_before'].mean():.6f}")
     print(f"   After:  Mean alignment score = {df['pca_alignment_after'].mean():.6f}")
     print(f"   Success rate: {pca_success:.1%} well-aligned (>99%)")
@@ -130,7 +130,7 @@ def generate_validation_report(df):
     
     # Save detailed results
     df.to_csv("stats/normalization_validation_results.csv", index=False)
-    print(f"\n💾 Detailed results saved to: normalization_validation_results.csv")
+    print(f"\n  Detailed results saved to: normalization_validation_results.csv")
 
 def create_validation_histograms(df):
     """Create before/after histograms for each validation metric"""
@@ -179,7 +179,7 @@ def create_validation_histograms(df):
     plt.savefig('img/normalization_validation_histograms.png', dpi=300, bbox_inches='tight')
     plt.show()
     
-    print("📈 Validation histograms saved to: normalization_validation_histograms.png")
+    print("  Validation histograms saved to: normalization_validation_histograms.png")
 
 # Add the individual validation functions here
 def validate_centering(mesh):
@@ -222,13 +222,13 @@ def validate_moment_flipping(mesh):
 def generate_validation_report_realistic(df):
     """Generate validation report with realistic tolerances"""
     
-    print("\n📋 NORMALIZATION VALIDATION REPORT (REALISTIC TOLERANCES)")
+    print("\n  NORMALIZATION VALIDATION REPORT (REALISTIC TOLERANCES)")
     print("=" * 70)
     
     # Centering validation - realistic tolerance
     centering_tolerance = 1e-3  # 0.001 instead of 1e-6
     centering_success = np.sum(df['centering_after'] < centering_tolerance) / len(df)
-    print(f"\n🎯 CENTERING VALIDATION:")
+    print(f"\n  CENTERING VALIDATION:")
     print(f"   Before: Mean distance from origin = {df['centering_before'].mean():.6f}")
     print(f"   After:  Mean distance from origin = {df['centering_after'].mean():.6f}")
     print(f"   Improvement: {((df['centering_before'].mean() - df['centering_after'].mean()) / df['centering_before'].mean()):.1%}")
@@ -237,7 +237,7 @@ def generate_validation_report_realistic(df):
     # Scaling validation - realistic tolerance  
     scaling_tolerance = 1e-2  # 1% tolerance instead of 1e-6
     scaling_success = np.sum(np.abs(df['scaling_after'] - 1.0) < scaling_tolerance) / len(df)
-    print(f"\n📏 SCALING VALIDATION:")
+    print(f"\n  SCALING VALIDATION:")
     print(f"   Before: Mean max dimension = {df['scaling_before'].mean():.6f}")
     print(f"   After:  Mean max dimension = {df['scaling_after'].mean():.6f}")
     print(f"   Standard deviation after: {df['scaling_after'].std():.6f}")
@@ -245,7 +245,7 @@ def generate_validation_report_realistic(df):
     
     # PCA alignment validation (this is already working well)
     pca_success = np.sum(df['pca_alignment_after'] > 0.99) / len(df)
-    print(f"\n🔄 PCA ALIGNMENT VALIDATION:")
+    print(f"\n  PCA ALIGNMENT VALIDATION:")
     print(f"   Before: Mean alignment score = {df['pca_alignment_before'].mean():.6f}")
     print(f"   After:  Mean alignment score = {df['pca_alignment_after'].mean():.6f}")
     print(f"   Success rate: {pca_success:.1%} well-aligned (>99%)")
@@ -262,7 +262,7 @@ def generate_validation_report_realistic(df):
     print(f"\n✅ OVERALL NORMALIZATION SUCCESS: {overall_success:.1%}")
     
     # Additional analysis
-    print(f"\n📊 IMPROVEMENT ANALYSIS:")
+    print(f"\n  IMPROVEMENT ANALYSIS:")
     centering_improved = np.mean(df['centering_after'] < df['centering_before'])
     scaling_improved = np.mean(np.abs(df['scaling_after'] - 1.0) < np.abs(df['scaling_before'] - 1.0))
     print(f"   Centering improved in: {centering_improved:.1%} of shapes")
@@ -279,9 +279,9 @@ def generate_validation_report_realistic(df):
 # Update the main function to validate ALL shapes and clarify directories
 
 if __name__ == "__main__":
-    print("🚀 STARTING COMPREHENSIVE NORMALIZATION VALIDATION")
+    print("  STARTING COMPREHENSIVE NORMALIZATION VALIDATION")
     print("=" * 70)
-    print("📁 Directory structure:")
+    print("  Directory structure:")
     print("   resampled_data/   → Original shapes (BEFORE normalization)")
     print("   normalized_data/  → Processed shapes (AFTER normalization)")
     print("   Validation compares BEFORE vs AFTER to prove normalization worked")
@@ -294,17 +294,17 @@ if __name__ == "__main__":
         sample_size=None  # This will process ALL shapes
     )
     
-    print(f"\n📊 VALIDATION COMPLETED ON {len(df)} SHAPES")
+    print(f"\n  VALIDATION COMPLETED ON {len(df)} SHAPES")
     
     # Run with realistic tolerances
     realistic_results = generate_validation_report_realistic(df)
     
     # Print final summary
     print(f"\n" + "="*70)
-    print(f"🎯 FINAL VALIDATION SUMMARY:")
+    print(f"  FINAL VALIDATION SUMMARY:")
     print(f"   Total shapes validated: {len(df)}")
     print(f"   Centering success: {realistic_results['centering_success']:.1%}")
     print(f"   Scaling success: {realistic_results['scaling_success']:.1%}")
     print(f"   PCA alignment success: {realistic_results['pca_success']:.1%}")
     print(f"   Moment flipping success: {realistic_results['flip_success']:.1%}")
-    print(f"   📈 OVERALL SUCCESS: {realistic_results['overall_success']:.1%}")
+    print(f"     OVERALL SUCCESS: {realistic_results['overall_success']:.1%}")

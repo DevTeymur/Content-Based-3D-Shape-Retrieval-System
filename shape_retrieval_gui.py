@@ -100,7 +100,7 @@ class ShapeRetrievalGUI:
         # search_frame = Frame(control_frame)
         # search_frame.pack(side=LEFT, padx=5)
 
-        # Label(search_frame, text="🔍", font=("Arial", 10)).pack(side=LEFT)
+        # Label(search_frame, text=" ", font=("Arial", 10)).pack(side=LEFT)
         # self.search_var = StringVar()
         # self.search_entry = Entry(search_frame, textvariable=self.search_var, width=15)
         # self.search_entry.pack(side=LEFT, padx=2)
@@ -217,7 +217,7 @@ class ShapeRetrievalGUI:
         search_frame = Frame(control_frame)
         search_frame.pack(side=LEFT, padx=5)
 
-        Label(search_frame, text="🔍", font=("Arial", 10)).pack(side=LEFT)
+        Label(search_frame, text=" ", font=("Arial", 10)).pack(side=LEFT)
         self.search_var = StringVar()
         self.search_entry = Entry(search_frame, textvariable=self.search_var, width=15)
         self.search_entry.pack(side=LEFT, padx=2)
@@ -256,7 +256,7 @@ class ShapeRetrievalGUI:
             
             mesh_row = matches.iloc[0]
             self.selected_info.config(
-                text=f"📁 {mesh_row['category']} | 📄 {found_filename}"
+                text=f"  {mesh_row['category']} |   {found_filename}"
             )
             self.status_label.config(
                 text=f"✅ Found and selected: {found_filename}", fg="green"
@@ -306,7 +306,7 @@ class ShapeRetrievalGUI:
                 # Update main GUI
                 self.mesh_var.set(selected_row['filename'])
                 self.selected_info.config(
-                    text=f"📁 {selected_row['category']} | 📄 {selected_row['filename']}"
+                    text=f"  {selected_row['category']} |   {selected_row['filename']}"
                 )
                 
                 result_window.destroy()
@@ -340,7 +340,7 @@ class ShapeRetrievalGUI:
             except Exception as e:
                 self.status_label.config(text=f"⚠️ Auto-load failed: {str(e)}", fg="orange")
         else:
-            self.status_label.config(text="📁 Default data not found. Use 'Load Data' button.", fg="blue")
+            self.status_label.config(text="  Default data not found. Use 'Load Data' button.", fg="blue")
     
     def load_data(self):
         """Load feature data from file dialog"""
@@ -406,7 +406,7 @@ class ShapeRetrievalGUI:
                 self.mesh_var.set(sample_meshes[0])
                 
             # Update info about categories
-            self.selected_info.config(text=f"📊 {len(categories)} categories, {len(self.features_df)} meshes")        
+            self.selected_info.config(text=f"  {len(categories)} categories, {len(self.features_df)} meshes")        
         # Display basic info
         self.display_data_info()
         
@@ -433,7 +433,7 @@ FEATURE COLUMNS:
 {', '.join(self.feature_columns[:10])}
 {'...' if len(self.feature_columns) > 10 else ''}
 
-💡 TIP: Use "Browse by Category" to select meshes by category
+  TIP: Use "Browse by Category" to select meshes by category
 """
         
         self.results_text.delete(1.0, END)
@@ -446,7 +446,7 @@ FEATURE COLUMNS:
             return
         
         try:
-            self.status_label.config(text="🔄 Computing statistics...", fg="blue")
+            self.status_label.config(text="  Computing statistics...", fg="blue")
             
             # Compute stats for feature columns
             feature_data = self.features_df[self.feature_columns]
@@ -532,11 +532,11 @@ FEATURE COLUMNS:
         
         try:
             # Show selected mesh info first
-            self.status_label.config(text="🔄 Analyzing selected mesh...", fg="blue")
+            self.status_label.config(text="  Analyzing selected mesh...", fg="blue")
             
             info = self.get_selected_mesh_info()
             self.results_text.delete(1.0, END)
-            self.results_text.insert(1.0, info + "\n\n🔄 Computing distances...\n")
+            self.results_text.insert(1.0, info + "\n\n  Computing distances...\n")
             self.root.update()
             
             # Get selected distance method
@@ -648,7 +648,7 @@ FEATURE COLUMNS:
         mesh_info = self.get_selected_mesh_info()
         
         results_text = mesh_info + "\n\n"
-        results_text += "🎯 DISTANCE COMPUTATION RESULTS\n"
+        results_text += "  DISTANCE COMPUTATION RESULTS\n"
         results_text += "=" * 70 + "\n"
         results_text += f"Distance Method: {method.upper()}\n"
         results_text += f"Total Comparisons: {len(distances)}\n\n"
@@ -676,7 +676,7 @@ FEATURE COLUMNS:
         mesh_info = self.get_selected_mesh_info()
         
         results_text = mesh_info + "\n\n"
-        results_text += "🎯 DISTANCE COMPUTATION RESULTS\n"
+        results_text += "  DISTANCE COMPUTATION RESULTS\n"
         results_text += "=" * 80 + "\n"
         results_text += f"Distance Method: ADVANCED COMBINED (Scalar + Histogram)\n"
         results_text += f"Total Comparisons: {len(results_df)}\n\n"
@@ -705,7 +705,7 @@ FEATURE COLUMNS:
                 return
         
         try:
-            self.status_label.config(text="🔄 Loading 3D visualization...", fg="blue")
+            self.status_label.config(text="  Loading 3D visualization...", fg="blue")
             
             query_mesh_path = self.get_query_mesh_path()
             if query_mesh_path is None:
@@ -723,7 +723,7 @@ FEATURE COLUMNS:
                 return
             
             # Use the unified visualization function for ALL methods
-            print(f"🎯 Visualizing with {distance_method} method: {query_mesh_path}")
+            print(f"  Visualizing with {distance_method} method: {query_mesh_path}")
             
             from visualization import visualize_shape_retrieval
             
@@ -833,7 +833,7 @@ FEATURE COLUMNS:
             else:
                 results_text += f"   Distance: {row['combined_distance']:.4f}\n"
         
-        results_text += f"\n💡 Close the visualization window when done viewing"
+        results_text += f"\n  Close the visualization window when done viewing"
         
         self.results_text.delete(1.0, END)
         self.results_text.insert(1.0, results_text)
@@ -849,7 +849,7 @@ FEATURE COLUMNS:
             return
         
         try:
-            self.status_label.config(text="📋 Displaying mesh information...", fg="blue")
+            self.status_label.config(text="  Displaying mesh information...", fg="blue")
             
             selected_filename = self.mesh_var.get()
             mesh_row = self.features_df[self.features_df['filename'] == selected_filename].iloc[0]
@@ -857,10 +857,10 @@ FEATURE COLUMNS:
             # Basic mesh info
             info_text = f"""CURRENT MESH INFORMATION
 {'=' * 60}
-📄 Filename: {mesh_row['filename']}
-📁 Category: {mesh_row['category']}
-📂 Path: {mesh_row['filepath']}
-🎯 Database Index: {mesh_row.name}
+  Filename: {mesh_row['filename']}
+  Category: {mesh_row['category']}
+  Path: {mesh_row['filepath']}
+  Database Index: {mesh_row.name}
 
 ALL 57 FEATURES:
 {'=' * 60}
@@ -889,7 +889,7 @@ ALL 57 FEATURES:
             
             info_text += f"\n\n{'=' * 60}"
             info_text += f"\nTotal Features: {len(self.feature_columns)}"
-            info_text += f"\n💡 Use 'Compute Distances' to find similar shapes"
+            info_text += f"\n  Use 'Compute Distances' to find similar shapes"
             
             # Display the results
             self.results_text.delete(1.0, END)
@@ -920,7 +920,7 @@ ALL 57 FEATURES:
         try:
             from plots import show_mesh_simple
             
-            self.status_label.config(text="🔄 Loading Matplotlib plot...", fg="blue")
+            self.status_label.config(text="  Loading Matplotlib plot...", fg="blue")
             show_mesh_simple(query_mesh_path)
             self.status_label.config(text="✅ Matplotlib plot opened!", fg="green")
         
@@ -948,7 +948,7 @@ ALL 57 FEATURES:
             import trimesh
             import open3d as o3d
             
-            self.status_label.config(text="🔄 Loading Open3D viewer...", fg="blue")
+            self.status_label.config(text="  Loading Open3D viewer...", fg="blue")
             
             # Load mesh with trimesh
             mesh = trimesh.load(str(query_mesh_path))
@@ -963,7 +963,7 @@ ALL 57 FEATURES:
             mesh_o3d.paint_uniform_color([0.7, 0.7, 0.7])
             
             # Show interactive viewer
-            print(f"🎯 Open3D Interactive Viewer: {Path(query_mesh_path).name}")
+            print(f"  Open3D Interactive Viewer: {Path(query_mesh_path).name}")
             o3d.visualization.draw_geometries(
                 [mesh_o3d],
                 window_name=f"3D Viewer - {Path(query_mesh_path).name}",
@@ -1046,7 +1046,7 @@ ALL 57 FEATURES:
                     
                     # Update info label
                     mesh_row = self.features_df[self.features_df['filename'] == selected_filename].iloc[0]
-                    self.selected_info.config(text=f"📁 {mesh_row['category']} | 📄 {selected_filename}")
+                    self.selected_info.config(text=f"  {mesh_row['category']} |   {selected_filename}")
                     
                     # Close browser window
                     browser_window.destroy()
@@ -1058,7 +1058,7 @@ ALL 57 FEATURES:
         
         # Instructions
         instructions = Label(browser_window, 
-                           text="🔍 Expand categories and click on a mesh file to select it",
+                           text="  Expand categories and click on a mesh file to select it",
                            font=("Arial", 10), fg="darkblue")
         instructions.pack(pady=5)
         
@@ -1094,10 +1094,10 @@ ALL 57 FEATURES:
         row = mesh_row.iloc[0]
         info = f"""SELECTED MESH INFORMATION
 {'=' * 40}
-📄 Filename: {row['filename']}
-📁 Category: {row['category']}
-📂 Path: {row['filepath']}
-🎯 Database Index: {mesh_row.index[0]}
+  Filename: {row['filename']}
+  Category: {row['category']}
+  Path: {row['filepath']}
+  Database Index: {mesh_row.index[0]}
 
 FEATURE PREVIEW:
 area: {row.get('area', 'N/A'):.3f}
@@ -1156,7 +1156,7 @@ diameter: {row.get('diameter', 'N/A'):.3f}
             )
             
             if file_path:
-                self.status_label.config(text="🔄 Exporting results...", fg="blue")
+                self.status_label.config(text="  Exporting results...", fg="blue")
                 
                 if file_path.endswith('.csv'):
                     results_df = pd.DataFrame(self.current_results)
@@ -1189,7 +1189,7 @@ diameter: {row.get('diameter', 'N/A'):.3f}
             return True
         
         try:
-            self.status_label.config(text="🔄 Initializing Step 5 engines...", fg="blue")
+            self.status_label.config(text="  Initializing Step 5 engines...", fg="blue")
             
             # Initialize KNN engine
             self.knn_engine = KNNEngine("step5_data")
@@ -1235,7 +1235,7 @@ diameter: {row.get('diameter', 'N/A'):.3f}
             # Get search type FIRST
             search_type = self.search_type_var.get()
             
-            self.status_label.config(text=f"🔄 Performing {search_type.upper()} search...", fg="blue")
+            self.status_label.config(text=f"  Performing {search_type.upper()} search...", fg="blue")
             
             # Get query filename and find its index in metadata
             query_filename = self.mesh_var.get()
@@ -1255,12 +1255,12 @@ diameter: {row.get('diameter', 'N/A'):.3f}
                 k_value = int(self.k_var.get())
                 results_df = self.knn_engine.query_knn(query_index, k=k_value)
                 search_info = f"K-NN (K={k_value})"
-                print(f"🔍 Performed KNN search with K={k_value}")
+                print(f"  Performed KNN search with K={k_value}")
             elif search_type == "range":
                 radius_value = float(self.radius_var.get())
                 results_df = self.knn_engine.query_range(query_index, radius=radius_value)
                 search_info = f"Range (R={radius_value})"
-                print(f"🎯 Performed Range search with R={radius_value}")
+                print(f"  Performed Range search with R={radius_value}")
             else:
                 messagebox.showerror("Error", f"Unknown search type: {search_type}")
                 return
@@ -1305,7 +1305,7 @@ diameter: {row.get('diameter', 'N/A'):.3f}
         search_type = self.search_type_var.get().upper()
         
         results_text = mesh_info + "\n\n"
-        results_text += f"🚀 {search_type} SEARCH RESULTS (Step 5)\n"
+        results_text += f"  {search_type} SEARCH RESULTS (Step 5)\n"
         results_text += "=" * 70 + "\n"
         results_text += f"Search Type: {search_info}\n"
         results_text += f"Query: {query_filename}\n"
@@ -1317,9 +1317,9 @@ diameter: {row.get('diameter', 'N/A'):.3f}
         
         # ADD EXPLANATION OF DIFFERENCE
         if search_type == "KNN":
-            results_text += f"📋 K-NN finds exactly {self.k_var.get()} most similar shapes\n\n"
+            results_text += f"  K-NN finds exactly {self.k_var.get()} most similar shapes\n\n"
         else:  # RANGE
-            results_text += f"📋 Range search finds ALL shapes within distance {self.radius_var.get()}\n\n"
+            results_text += f"  Range search finds ALL shapes within distance {self.radius_var.get()}\n\n"
         
         results_text += f"TOP RESULTS:\n"
         results_text += f"{'-' * 70}\n"
@@ -1333,7 +1333,7 @@ diameter: {row.get('diameter', 'N/A'):.3f}
         if len(results_df) > 15:
             results_text += f"... and {len(results_df) - 15} more results\n"
         
-        results_text += f"\n💡 Use 'View Similar' to visualize these results in 3D"
+        results_text += f"\n  Use 'View Similar' to visualize these results in 3D"
         
         self.results_text.delete(1.0, END)
         self.results_text.insert(1.0, results_text)
@@ -1361,7 +1361,7 @@ Status: {"Computing..." if step < total else "Complete!"}
         
         try:
             update_progress("Initializing Step 5 engines...", 1)
-            self.status_label.config(text="🔄 Loading t-SNE visualization...", fg="blue")
+            self.status_label.config(text="  Loading t-SNE visualization...", fg="blue")
             
             # Initialize dimensionality reducer if needed
             if not self.initialize_step5_engines():
@@ -1375,7 +1375,7 @@ Status: {"Computing..." if step < total else "Complete!"}
             
             if not embedding_file.exists():
                 update_progress("Computing t-SNE embedding (1-2 minutes)...", 3)
-                self.status_label.config(text="🔄 Computing t-SNE embedding...", fg="blue")
+                self.status_label.config(text="  Computing t-SNE embedding...", fg="blue")
                 
                 # Compute t-SNE in main thread (blocking but safe)
                 if not self.dimensionality_reducer.compute_tsne(perplexity=30, n_iter=1000):
@@ -1402,7 +1402,7 @@ Status: {"Computing..." if step < total else "Complete!"}
             self.dimensionality_reducer.show_plot()
             
             self.status_label.config(text="✅ t-SNE visualization opened!", fg="green")
-            self.performance_label.config(text="🎨 t-SNE plot: Hover points for details, right-click for KNN highlighting")
+            self.performance_label.config(text="  t-SNE plot: Hover points for details, right-click for KNN highlighting")
             
             # Get actual statistics from your dimensionality reducer
             if hasattr(self.dimensionality_reducer, 'X_2d') and self.dimensionality_reducer.X_2d is not None:
@@ -1429,9 +1429,9 @@ Status: {"Computing..." if step < total else "Complete!"}
             results_text = f"""t-SNE DIMENSIONALITY REDUCTION VISUALIZATION
 ======================================================
 
-🎨 Interactive 2D scatterplot opened in new window
-📊 {n_points} shapes reduced from {n_features}D to {n_dims}D using t-SNE
-🌈 Points colored by category ({n_categories} categories)
+  Interactive 2D scatterplot opened in new window
+  {n_points} shapes reduced from {n_features}D to {n_dims}D using t-SNE
+  Points colored by category ({n_categories} categories)
 
 CURRENT DATABASE STATISTICS:
 • Total shapes: {n_points:,}
@@ -1457,7 +1457,7 @@ EMBEDDING QUALITY:
 • Iterations: 1000 (convergence parameter)
 • Embedding range: X[{self.dimensionality_reducer.X_2d[:, 0].min():.1f}, {self.dimensionality_reducer.X_2d[:, 0].max():.1f}], Y[{self.dimensionality_reducer.X_2d[:, 1].min():.1f}, {self.dimensionality_reducer.X_2d[:, 1].max():.1f}]
 
-💡 Well-separated clusters indicate good feature quality!
+  Well-separated clusters indicate good feature quality!
 Currently viewing: {self.mesh_var.get() if self.mesh_var.get() != "Select mesh..." else "No mesh selected"}
 """
             
@@ -1484,10 +1484,10 @@ Currently viewing: {self.mesh_var.get() if self.mesh_var.get() != "Select mesh..
             import numpy as np
             np.random.seed(42)  # Fixed seed for consistency
             
-            self.status_label.config(text="🔄 Comparing Step 4 vs Step 5 methods...", fg="blue")
+            self.status_label.config(text="  Comparing Step 4 vs Step 5 methods...", fg="blue")
             
             query_filename = self.mesh_var.get()
-            print(f"🎯 Deterministic comparison for: {query_filename}")
+            print(f"  Deterministic comparison for: {query_filename}")
             
             # Step 4: Compute using your custom distance (advanced_combined)
             old_distance_var = self.distance_var.get()
@@ -1528,7 +1528,7 @@ Currently viewing: {self.mesh_var.get() if self.mesh_var.get() != "Select mesh..
             self.performance_label.config(text=f"⚡ Speedup: {speedup:.1f}x faster (Step 4: {step4_time:.3f}s vs Step 5: {step5_time:.4f}s)")
             
             # ADD DEBUG INFO
-            print(f"🔍 Debug Info:")
+            print(f"  Debug Info:")
             print(f"  Step 4 distance range: {min([r['distance'] for r in step4_results]):.4f} - {max([r['distance'] for r in step4_results]):.4f}")
             if len(knn_results_df) > 0:
                 print(f"  Step 5 distance range: {knn_results_df['distance'].min():.4f} - {knn_results_df['distance'].max():.4f}")
@@ -1595,7 +1595,7 @@ TOP 10 RESULTS COMPARISON:
             else:
                 results_text += "❌ Low similarity: Significant differences between methods\n"
         
-        results_text += f"\n💡 Use 'View Similar' to visualize results from either method"
+        results_text += f"\n  Use 'View Similar' to visualize results from either method"
         
         self.results_text.delete(1.0, END)
         self.results_text.insert(1.0, results_text)
@@ -1603,7 +1603,7 @@ TOP 10 RESULTS COMPARISON:
     def create_step6_frame(self):
         """Create Step 6 evaluation interface"""
         step6_frame = Frame(self.notebook)
-        self.notebook.add(step6_frame, text="📊 Step 6: Evaluation")
+        self.notebook.add(step6_frame, text="  Step 6: Evaluation")
         
         # Title
         title_label = Label(step6_frame, text="Step 6: CBSR System Evaluation", 
@@ -1646,28 +1646,28 @@ Tests system performance across all categories and generates comprehensive analy
         buttons_frame.pack(pady=20)
         
         # Quick evaluation button
-        quick_btn = Button(buttons_frame, text="🚀 Quick Evaluation (50 queries)", 
+        quick_btn = Button(buttons_frame, text="  Quick Evaluation (50 queries)", 
                           command=self.run_quick_evaluation,
                           bg="lightgreen", font=("Arial", 11, "bold"), 
                           width=25, height=2)
         quick_btn.pack(side=LEFT, padx=10)
         
         # Full evaluation button
-        full_btn = Button(buttons_frame, text="📊 Full Evaluation", 
+        full_btn = Button(buttons_frame, text="  Full Evaluation", 
                          command=self.run_full_evaluation,
                          bg="lightblue", font=("Arial", 11, "bold"), 
                          width=20, height=2)
         full_btn.pack(side=LEFT, padx=10)
         
         # View results button
-        view_btn = Button(buttons_frame, text="📈 View Last Results", 
+        view_btn = Button(buttons_frame, text="  View Last Results", 
                          command=self.view_evaluation_results,
                          bg="lightyellow", font=("Arial", 11, "bold"), 
                          width=20, height=2)
         view_btn.pack(side=LEFT, padx=10)
         
         # Add this button to your Step 6 GUI frame
-        tech_btn = Button(buttons_frame, text="📋 Technical Analysis", 
+        tech_btn = Button(buttons_frame, text="  Technical Analysis", 
                          command=self.run_technical_analysis,
                          bg="lightcyan", font=("Arial", 11, "bold"), 
                          width=20, height=2)
@@ -1716,10 +1716,10 @@ Ready to evaluate your CBSR system!"""
     def run_quick_evaluation(self):
         """Run quick evaluation with 50 queries"""
         try:
-            self.status_label.config(text="🔄 Running quick evaluation...", fg="blue")
+            self.status_label.config(text="  Running quick evaluation...", fg="blue")
             self.eval_results_text.config(state=NORMAL)
             self.eval_results_text.delete(1.0, END)
-            self.eval_results_text.insert(1.0, "🚀 Starting quick evaluation...\n\n")
+            self.eval_results_text.insert(1.0, "  Starting quick evaluation...\n\n")
             self.eval_results_text.config(state=DISABLED)
             self.root.update()
             
@@ -1740,8 +1740,8 @@ Ready to evaluate your CBSR system!"""
             
             # Update progress
             self.eval_results_text.config(state=NORMAL)
-            self.eval_results_text.insert(END, f"📊 Evaluating {max_queries} random queries...\n")
-            self.eval_results_text.insert(END, f"📈 K values: {k_values}\n\n")
+            self.eval_results_text.insert(END, f"  Evaluating {max_queries} random queries...\n")
+            self.eval_results_text.insert(END, f"  K values: {k_values}\n\n")
             self.eval_results_text.config(state=DISABLED)
             self.root.update()
             
@@ -1774,10 +1774,10 @@ Ready to evaluate your CBSR system!"""
                 "Full evaluation may take 1-2 minutes. Continue?"):
                 return
             
-            self.status_label.config(text="🔄 Running full evaluation...", fg="blue")
+            self.status_label.config(text="  Running full evaluation...", fg="blue")
             self.eval_results_text.config(state=NORMAL)
             self.eval_results_text.delete(1.0, END)
-            self.eval_results_text.insert(1.0, "📊 Starting comprehensive evaluation...\n\n")
+            self.eval_results_text.insert(1.0, "  Starting comprehensive evaluation...\n\n")
             self.eval_results_text.config(state=DISABLED)
             self.root.update()
             
@@ -1799,7 +1799,7 @@ Ready to evaluate your CBSR system!"""
             
             # Update progress
             self.eval_results_text.config(state=NORMAL)
-            self.eval_results_text.insert(END, f"🔄 Initializing evaluation engine...\n")
+            self.eval_results_text.insert(END, f"  Initializing evaluation engine...\n")
             self.eval_results_text.config(state=DISABLED)
             self.root.update()
             
@@ -1807,7 +1807,7 @@ Ready to evaluate your CBSR system!"""
                 
                 # Generate comprehensive analysis
                 self.eval_results_text.config(state=NORMAL)
-                self.eval_results_text.insert(END, f"📈 Generating plots and analysis...\n")
+                self.eval_results_text.insert(END, f"  Generating plots and analysis...\n")
                 self.eval_results_text.config(state=DISABLED)
                 self.root.update()
                 
@@ -1819,7 +1819,7 @@ Ready to evaluate your CBSR system!"""
                 self._display_evaluation_results(analyzer.results, analyzer.summary, "Full")
                 
                 self.status_label.config(text="✅ Full evaluation completed!", fg="green")
-                self.performance_label.config(text="📁 Check step5_data/step6_results/ for saved plots")
+                self.performance_label.config(text="  Check step5_data/step6_results/ for saved plots")
                 
             else:
                 messagebox.showerror("Error", "Full evaluation failed")
@@ -1873,7 +1873,7 @@ SYSTEM PERFORMANCE SUMMARY:
                 recall_std = summary[f'overall_recall@{k}']['std']
                 
                 results_text += f"""
-📊 K={k} Results:
+  K={k} Results:
    Precision@{k}: {precision:.3f} ± {precision_std:.3f}
    Recall@{k}: {recall:.3f} ± {recall_std:.3f}"""
         
@@ -1885,7 +1885,7 @@ SYSTEM PERFORMANCE SUMMARY:
             
             results_text += f"""
 
-💡 KEY INSIGHTS:
+  KEY INSIGHTS:
 • Perfect top-1 accuracy: {precision_1:.1%}
 • Top-10 relevance: {precision_10:.1%}  
 • System efficiency: {precision_10/0.014:.0f}x better than random
@@ -1896,7 +1896,7 @@ SYSTEM PERFORMANCE SUMMARY:
         
         # Top performing categories
         if 'category_summary' in summary:
-            results_text += "🏆 TOP PERFORMING CATEGORIES (Precision@10):\n"
+            results_text += "  TOP PERFORMING CATEGORIES (Precision@10):\n"
             results_text += "-" * 50 + "\n"
             
             # Sort categories by precision@10
@@ -1916,19 +1916,19 @@ SYSTEM PERFORMANCE SUMMARY:
                 results_text += f"{i+1:2d}. {category:<20} {precision:.3f} ({count} queries)\n"
             
             # Show bottom 5
-            results_text += "\n💔 CHALLENGING CATEGORIES:\n"
+            results_text += "\n  CHALLENGING CATEGORIES:\n"
             results_text += "-" * 30 + "\n"
             for category, precision, count in category_performance[-5:]:
                 results_text += f"    {category:<20} {precision:.3f} ({count} queries)\n"
         
         results_text += f"""
 
-📈 ANALYSIS COMPLETE:
+  ANALYSIS COMPLETE:
 • Use "View Last Results" to see this data again
 • Check step5_data/step6_results/ for detailed plots
 • Generated evaluation plots show distributions and category analysis
 
-🎯 NEXT STEPS:
+  NEXT STEPS:
 • Investigate low-performing categories
 • Consider feature engineering improvements  
 • Compare with other similarity metrics

@@ -461,14 +461,14 @@ def generate_statistics_report(stats):
     report.append(f"   - Histogram features: {stats['histogram_features_count']}")
     
     # Feature Breakdown
-    report.append(f"\n🔢 FEATURE BREAKDOWN:")
+    report.append(f"\n  FEATURE BREAKDOWN:")
     report.append(f"   Scalar features: {', '.join(stats['scalar_features'])}")
     report.append(f"   Histogram features:")
     for prefix, count in stats['histogram_breakdown'].items():
         report.append(f"     - {prefix}: {count} bins")
     
     # Category Distribution
-    report.append(f"\n📂 CATEGORY DISTRIBUTION:")
+    report.append(f"\n  CATEGORY DISTRIBUTION:")
     report.append(f"   Average meshes per category: {stats['category_distribution']['avg_meshes']:.1f}")
     report.append(f"   Min meshes per category: {stats['category_distribution']['min_meshes']} "
                  f"({', '.join(stats['category_distribution']['categories_with_min'][:3])}{'...' if len(stats['category_distribution']['categories_with_min']) > 3 else ''})")
@@ -476,7 +476,7 @@ def generate_statistics_report(stats):
                  f"({', '.join(stats['category_distribution']['categories_with_max'][:3])}{'...' if len(stats['category_distribution']['categories_with_max']) > 3 else ''})")
     
     # Scalar Feature Statistics
-    report.append(f"\n📈 SCALAR FEATURE STATISTICS:")
+    report.append(f"\n  SCALAR FEATURE STATISTICS:")
     for feature, stats_dict in stats['scalar_statistics'].items():
         report.append(f"   {feature}:")
         report.append(f"     Range: [{stats_dict['min']:.3f}, {stats_dict['max']:.3f}]")
@@ -484,7 +484,7 @@ def generate_statistics_report(stats):
         report.append(f"     Median: {stats_dict['median']:.3f}")
     
     # Data Quality
-    report.append(f"\n🔍 DATA QUALITY METRICS:")
+    report.append(f"\n  DATA QUALITY METRICS:")
     if not stats['data_quality']['missing_values']:
         report.append("   ✅ No missing values detected")
     else:

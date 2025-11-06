@@ -23,7 +23,7 @@ class CBSREvaluator:
     def initialize(self):
         """Initialize KNN engine and load metadata"""
         try:
-            print("🔄 Initializing CBSR Evaluator...")
+            print("  Initializing CBSR Evaluator...")
             
             # Initialize KNN engine
             self.knn_engine = KNNEngine(self.data_path)
@@ -46,9 +46,9 @@ class CBSREvaluator:
             self.category_counts = {cat: self.categories.count(cat) for cat in unique_categories}
             
             print(f"✅ Evaluator initialized successfully!")
-            print(f"   📊 Database size: {len(self.metadata)} shapes")
-            print(f"   📁 Categories: {len(unique_categories)}")
-            print(f"   🎯 KNN index ready")
+            print(f"     Database size: {len(self.metadata)} shapes")
+            print(f"     Categories: {len(unique_categories)}")
+            print(f"     KNN index ready")
             
             return True
             
@@ -170,8 +170,8 @@ class CBSREvaluator:
         
         query_indices = np.random.choice(total_shapes, size=num_queries, replace=False)
         
-        print(f"🔍 Evaluating {num_queries} random queries...")
-        print(f"📊 K values: {k_values}")
+        print(f"  Evaluating {num_queries} random queries...")
+        print(f"  K values: {k_values}")
         
         # Store results by category and K value
         category_results = defaultdict(lambda: defaultdict(list))
@@ -327,7 +327,7 @@ class CBSREvaluator:
         """Print analysis following Step 6 technical guidelines"""
         detailed = self.compute_detailed_metrics(k)
         
-        print(f"\n📋 TECHNICAL EVALUATION ANALYSIS (K={k})")
+        print(f"\n  TECHNICAL EVALUATION ANALYSIS (K={k})")
         print("=" * 80)
         print(f"Following Step 6 evaluation guidelines:")
         print(f"• Database size |DB| = {len(self.metadata)}")
@@ -362,24 +362,23 @@ class CBSREvaluator:
         Compute metrics with class balancing
         Each category gets equal weight regardless of size
         """
-        if not self.evaluation_results:  # ✅ FIX: was self.results
+        if not self.evaluation_results:  
             return None
         
-        print("\n🎯 Computing class-balanced metrics...")
+        print("\n  Computing class-balanced metrics...")
         
         # Group results by category
         category_metrics = {}
         
-        k_values = self.evaluation_results['metadata']['k_values']  # ✅ FIX: get from metadata
+        k_values = self.evaluation_results['metadata']['k_values']
         
         for k in k_values:
             category_precisions = {}
             category_recalls = {}
             
             # For each query, group by its category
-            for result in self.evaluation_results['overall_results'][k]:  # ✅ FIX: was self.results
-                query_category = result['category']  # ✅ FIX: the key is 'category' not 'query_category'
-                
+            for result in self.evaluation_results['overall_results'][k]:  
+                query_category = result['category']  
                 if query_category not in category_precisions:
                     category_precisions[query_category] = []
                     category_recalls[query_category] = []
@@ -415,7 +414,7 @@ class CBSREvaluator:
 # Test function to verify the implementation
 def test_evaluator():
     """Test the CBSR evaluator with a small subset"""
-    print("🧪 Testing CBSR Evaluator...")
+    print("  Testing CBSR Evaluator...")
     
     evaluator = CBSREvaluator("step5_data")
     
@@ -429,7 +428,7 @@ def test_evaluator():
     if results:
         summary = evaluator.compute_summary_statistics()
         
-        print("\n📊 TEST RESULTS:")
+        print("\n  TEST RESULTS:")
         print(f"   Queries tested: {results['metadata']['num_queries']}")
         print(f"   Categories found: {len(results['category_results'])}")
         

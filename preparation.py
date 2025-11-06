@@ -73,8 +73,8 @@ class FeaturePreparation:
                               if col not in self.histogram_features]
         
         print(f"✅ Separated features:")
-        print(f"   📊 Scalar features: {len(self.scalar_features)}")
-        print(f"   📈 Histogram features: {len(self.histogram_features)}")
+        print(f"     Scalar features: {len(self.scalar_features)}")
+        print(f"     Histogram features: {len(self.histogram_features)}")
         
         return True
     
@@ -96,7 +96,7 @@ class FeaturePreparation:
             scalar_matrix = self.features_df[self.scalar_features].values
             histogram_matrix = self.features_df[self.histogram_features].values
             
-            print(f"🔄 Normalizing features using {method} method...")
+            print(f"  Normalizing features using {method} method...")
             
             # Normalize scalar features
             if method == 'zscore':
@@ -142,8 +142,8 @@ class FeaturePreparation:
             self.X_scaled[:, n_scalar:] = hist_weighted
             
             print(f"✅ Feature normalization complete")
-            print(f"   📐 Final matrix shape: {self.X_scaled.shape}")
-            print(f"   📊 Scalar weight: {scalar_weight}, Histogram weight: {histogram_weight}")
+            print(f"     Final matrix shape: {self.X_scaled.shape}")
+            print(f"     Scalar weight: {scalar_weight}, Histogram weight: {histogram_weight}")
             
             return True
             
@@ -236,7 +236,7 @@ class FeaturePreparation:
                     f.write(f"{key}: {value}\n")
             
             print(f"✅ Saved processing summary to {summary_file}")
-            print(f"\n🎯 All processed data saved to: {output_path}")
+            print(f"\n  All processed data saved to: {output_path}")
             
             return True
             
@@ -250,7 +250,7 @@ class FeaturePreparation:
             print("❌ Please normalize features first")
             return
         
-        print(f"\n📊 FEATURE STATISTICS")
+        print(f"\n  FEATURE STATISTICS")
         print("=" * 50)
         print(f"Dataset shape: {self.X_scaled.shape}")
         print(f"Feature range: [{self.X_scaled.min():.3f}, {self.X_scaled.max():.3f}]")
@@ -260,7 +260,7 @@ class FeaturePreparation:
         # Category distribution
         if self.features_df is not None:
             category_counts = self.features_df['category'].value_counts()
-            print(f"\n📁 CATEGORY DISTRIBUTION")
+            print(f"\n  CATEGORY DISTRIBUTION")
             print(f"Number of categories: {len(category_counts)}")
             print("Top 5 categories:")
             for cat, count in category_counts.head().items():
@@ -268,7 +268,7 @@ class FeaturePreparation:
 
 def main():
     """Main function to run feature preparation"""
-    print("🚀 Starting Step 5 Feature Preparation...")
+    print("  Starting Step 5 Feature Preparation...")
     
     # Initialize preparation system
     prep = FeaturePreparation()
@@ -302,7 +302,7 @@ def main():
     prep.get_feature_statistics()
     
     print("\n✅ Feature preparation completed successfully!")
-    print("📁 Ready for KNN indexing and dimensionality reduction")
+    print("  Ready for KNN indexing and dimensionality reduction")
 
 if __name__ == "__main__":
     main()

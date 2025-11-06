@@ -21,7 +21,7 @@ class Step6Analyzer:
         
     def run_full_evaluation(self, max_queries=None, k_values=[1, 5, 10]):
         """Run comprehensive evaluation on all shapes"""
-        print("🚀 Running comprehensive CBSR evaluation...")
+        print("  Running comprehensive CBSR evaluation...")
         
         # Initialize evaluator
         if not self.evaluator.initialize():
@@ -32,7 +32,7 @@ class Step6Analyzer:
         total_shapes = len(self.evaluator.metadata)
         num_queries = total_shapes if max_queries is None else min(max_queries, total_shapes)
         
-        print(f"📊 Evaluating {num_queries} queries out of {total_shapes} total shapes")
+        print(f"  Evaluating {num_queries} queries out of {total_shapes} total shapes")
         
         # Run evaluation
         self.results = self.evaluator.evaluate_subset(
@@ -78,7 +78,7 @@ class Step6Analyzer:
                 json_balanced = self._convert_numpy_types(self.balanced_metrics)
                 json.dump(json_balanced, f, indent=2)
         
-        print(f"💾 Results saved to {results_dir}")
+        print(f"  Results saved to {results_dir}")
     
     def _convert_numpy_types(self, obj):
         """Convert numpy types to native Python types for JSON serialization"""
@@ -117,7 +117,7 @@ class Step6Analyzer:
             })
         
         df = pd.DataFrame(data)
-        print("\n📊 OVERALL PERFORMANCE SUMMARY")
+        print("\n  OVERALL PERFORMANCE SUMMARY")
         print("=" * 80)
         print(df.to_string(index=False))
         
@@ -148,11 +148,11 @@ class Step6Analyzer:
         df = pd.DataFrame(category_data)
         df_sorted = df.sort_values(f'{metric.title()}@{k}', ascending=False)
         
-        print(f"\n🏆 TOP {top_n} CATEGORIES BY {metric.upper()}@{k}")
+        print(f"\n  TOP {top_n} CATEGORIES BY {metric.upper()}@{k}")
         print("=" * 60)
         print(df_sorted.head(top_n).to_string(index=False))
         
-        print(f"\n💔 BOTTOM {top_n} CATEGORIES BY {metric.upper()}@{k}")
+        print(f"\n  BOTTOM {top_n} CATEGORIES BY {metric.upper()}@{k}")
         print("=" * 60)
         print(df_sorted.tail(top_n).to_string(index=False))
         
@@ -200,7 +200,7 @@ class Step6Analyzer:
         plt.savefig(results_dir / f"performance_distribution_k{k}.png", dpi=300, bbox_inches='tight')
         plt.show()
         
-        print(f"📈 Performance distribution plot saved")
+        print(f"  Performance distribution plot saved")
     
     def plot_category_performance(self, k=10, metric='precision', top_n=15):
         """Create bar plot of category performance"""
@@ -243,7 +243,7 @@ class Step6Analyzer:
         plt.savefig(results_dir / f"category_{metric}_k{k}.png", dpi=300, bbox_inches='tight')
         plt.show()
         
-        print(f"📊 Category {metric} plot saved")
+        print(f"  Category {metric} plot saved")
     
     def generate_report_summary(self):
         """Generate text summary for report"""
@@ -251,11 +251,11 @@ class Step6Analyzer:
             print("❌ No summary statistics available")
             return
         
-        print("\n📝 STEP 6 EVALUATION REPORT SUMMARY")
+        print("\n  STEP 6 EVALUATION REPORT SUMMARY")
         print("=" * 80)
         
         # Overall performance (STANDARD - all queries equally weighted)
-        print("\n🎯 OVERALL PERFORMANCE (All queries equally weighted):")
+        print("\n  OVERALL PERFORMANCE (All queries equally weighted):")
         for k in [1, 5, 10]:
             precision = self.summary[f'overall_precision@{k}']['mean']
             recall = self.summary[f'overall_recall@{k}']['mean']
@@ -271,7 +271,7 @@ class Step6Analyzer:
                 print(f"   Precision@{k}: {precision:.3f} | Recall@{k}: {recall:.3f} ({num_categories} categories)")
         
         # Best performing categories
-        print("\n🏆 TOP PERFORMING CATEGORIES (Precision@10):")
+        print("\n  TOP PERFORMING CATEGORIES (Precision@10):")
         df_precision = self.create_category_ranking(k=10, metric='precision', top_n=5)
         if df_precision is not None:
             top_5 = df_precision.head(5)
@@ -282,7 +282,7 @@ class Step6Analyzer:
         precision_1 = self.summary['overall_precision@1']['mean']
         precision_10 = self.summary['overall_precision@10']['mean']
         
-        print(f"\n💡 KEY INSIGHTS:")
+        print(f"\n  KEY INSIGHTS:")
         print(f"   • Perfect top-1 accuracy: {precision_1:.1%}")
         print(f"   • Strong top-10 relevance: {precision_10:.1%}")
         
@@ -408,7 +408,7 @@ class Step6Analyzer:
         plt.savefig(results_dir / "tp_fp_fn_trends.png", dpi=300, bbox_inches='tight')
         plt.show()
         
-        print("📈 TP/FP/FN trends plot saved")
+        print("  TP/FP/FN trends plot saved")
     
     def plot_all_categories_precision10(self):
         """Create comprehensive category-wise Precision@10 plot for all 69 categories"""
@@ -484,7 +484,7 @@ class Step6Analyzer:
         plt.savefig(results_dir / "categorywise_precision10.png", dpi=300, bbox_inches='tight')
         plt.show()
         
-        print("📊 Category-wise Precision@10 plot saved")
+        print("  Category-wise Precision@10 plot saved")
         
         return df_sorted
     
@@ -537,7 +537,7 @@ class Step6Analyzer:
         
         if table_data:
             df = pd.DataFrame(table_data)
-            print("\n📊 TP/FP/FN STATISTICS TABLE")
+            print("\n  TP/FP/FN STATISTICS TABLE")
             print("=" * 80)
             print(df.to_string(index=False))
             return df
@@ -551,7 +551,7 @@ class Step6Analyzer:
             print("❌ No evaluation results available")
             return
         
-        print("🔍 DEBUGGING RESULTS STRUCTURE")
+        print("  DEBUGGING RESULTS STRUCTURE")
         print("=" * 50)
         
         # Check top-level keys
@@ -587,20 +587,20 @@ def main():
         analyzer.plot_category_performance(k=10, metric='precision', top_n=15)
         
         # Generate missing figures for your report
-        print("\n🎨 Generating missing figures for report...")
+        print("\n  Generating missing figures for report...")
         
         # This one should work
         analyzer.plot_all_categories_precision10()  # For categorywise_precision10.png
         
         # Debug and try TP/FP/FN
-        print("\n🔍 Attempting TP/FP/FN analysis...")
+        print("\n  Attempting TP/FP/FN analysis...")
         analyzer.plot_tp_fp_fn_trends()             # For tp_fp_fn_trends.png
         analyzer.generate_tp_fp_fn_table_data()     # For table data verification
         
         analyzer.generate_report_summary()
         
         print("\n✅ Step 6 analysis completed!")
-        print("📁 Check step5_data/step6_results/ for generated plots")
+        print("  Check step5_data/step6_results/ for generated plots")
     else:
         print("❌ Analysis failed")
 

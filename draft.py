@@ -345,7 +345,7 @@ import random
 def analyze_elementary_features():
     """Validate elementary features across the database"""
     
-    print("🔍 ELEMENTARY FEATURES VALIDATION")
+    print("  ELEMENTARY FEATURES VALIDATION")
     print("=" * 50)
     
     # Load sample of shapes from different categories
@@ -374,7 +374,7 @@ def analyze_elementary_features():
     df = pd.DataFrame(feature_data)
     
     # 1. Check value ranges
-    print("\n📊 FEATURE VALUE RANGES:")
+    print("\n  FEATURE VALUE RANGES:")
     feature_cols = ['area', 'volume', 'aabb_volume', 'compactness', 'diameter', 'convexity', 'eccentricity']
     
     for col in feature_cols:
@@ -389,7 +389,7 @@ def analyze_elementary_features():
     print(f"Diameter reasonable: {'✅' if df['diameter'].min() >= 0 and df['diameter'].max() <= 2 else '❌'}")
     
     # 3. Show examples of different shape types
-    print(f"\n🎭 SHAPE TYPE EXAMPLES:")
+    print(f"\n  SHAPE TYPE EXAMPLES:")
     
     # Find most/least compact, eccentric, etc.
     most_compact = df.loc[df['compactness'].idxmin()]
@@ -438,7 +438,7 @@ def create_feature_distribution_plots(df):
     plt.savefig('img/elementary_features_distributions.png', dpi=300, bbox_inches='tight')
     plt.show()
     
-    print("📈 Feature distribution plots saved to: elementary_features_distributions.png")
+    print("  Feature distribution plots saved to: elementary_features_distributions.png")
 
 # if __name__ == "__main__":
 #     df = analyze_elementary_features()
@@ -461,7 +461,7 @@ def get_available_categories():
 def analyze_histogram_discriminativeness():
     """Analyze if histogram features are discriminative between classes"""
     
-    print("📊 HISTOGRAM FEATURES DISCRIMINATIVE ANALYSIS")
+    print("  HISTOGRAM FEATURES DISCRIMINATIVE ANALYSIS")
     print("=" * 60)
     
     # Get available categories and select first 4 with enough shapes
@@ -504,13 +504,13 @@ def analyze_histogram_discriminativeness():
             histogram_data[category] = category_histograms
     
     # 1. Compute intra-class vs inter-class distances
-    print("\n🔍 INTRA-CLASS vs INTER-CLASS ANALYSIS:")
+    print("\n  INTRA-CLASS vs INTER-CLASS ANALYSIS:")
     
     # For each descriptor type (A3, D1, D2, D3, D4)
     descriptor_types = ['A3', 'D1', 'D2', 'D3', 'D4']
     
     for desc_type in descriptor_types:
-        print(f"\n📈 {desc_type} Descriptor Analysis:")
+        print(f"\n  {desc_type} Descriptor Analysis:")
         
         intra_distances = []
         inter_distances = []
@@ -565,7 +565,7 @@ def analyze_histogram_discriminativeness():
 def visualize_histogram_comparison():
     """Visualize histogram shapes for same vs different classes"""
     
-    print("\n🎨 HISTOGRAM SHAPE VISUALIZATION")
+    print("\n  HISTOGRAM SHAPE VISUALIZATION")
     
     # Get available categories
     normalized_dir = Path("normalized_data")
@@ -630,7 +630,7 @@ def visualize_histogram_comparison():
         plt.savefig('histogram_comparison_different_classes.png', dpi=300, bbox_inches='tight')
         plt.show()
         
-        print("📊 Histogram comparison plots saved")
+        print("  Histogram comparison plots saved")
         
     except Exception as e:
         print(f"❌ Error in visualization: {e}")
@@ -643,7 +643,7 @@ if __name__ == "__main__":
 def analyze_sampling_coverage():
     """Analyze if 2000 samples provide good coverage"""
     
-    print("🎯 SAMPLING COVERAGE ANALYSIS")
+    print("  SAMPLING COVERAGE ANALYSIS")
     print("=" * 40)
     
     # Test with different sample sizes
@@ -682,7 +682,7 @@ def analyze_sampling_coverage():
         results[sample_size] = hist
     
     # Compare stability of histograms
-    print(f"\n📊 HISTOGRAM STABILITY ANALYSIS:")
+    print(f"\n  HISTOGRAM STABILITY ANALYSIS:")
     base_hist = results[2000]  # Your current setting
     
     for sample_size, hist in results.items():
@@ -690,7 +690,7 @@ def analyze_sampling_coverage():
             difference = euclidean(base_hist, hist)
             print(f"Sample size {sample_size:5d}: Distance from 2000-sample = {difference:.4f}")
     
-    print(f"\n💡 INTERPRETATION:")
+    print(f"\n  INTERPRETATION:")
     print(f"  - Small distances (<0.1) indicate stable histograms")
     print(f"  - Large distances (>0.2) suggest insufficient sampling")
     print(f"  - Your 2000 samples: {'Adequate' if max([euclidean(base_hist, h) for h in results.values()]) < 0.15 else 'May need increase'}")

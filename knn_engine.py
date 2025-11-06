@@ -76,14 +76,14 @@ class KNNEngine:
             return False
         
         try:
-            print(f"🔄 Building KNN index with {metric} distance...")
+            print(f"  Building KNN index with {metric} distance...")
             start_time = time.time()
             
             # CHECK IF FEATURES ARE ALREADY NORMALIZED
             feature_range = self.X_features.max() - self.X_features.min()
             feature_mean = abs(self.X_features.mean())
             
-            print(f"📊 Feature statistics:")
+            print(f"  Feature statistics:")
             print(f"   Range: {feature_range:.3f}")
             print(f"   Mean: {feature_mean:.3f}")
             print(f"   Min: {self.X_features.min():.3f}")
@@ -91,13 +91,13 @@ class KNNEngine:
             
             # APPLY STEP 4 STYLE NORMALIZATION ONLY IF REQUESTED
             if use_step4_normalization:
-                print("🔧 Applying feature-type-specific normalization (MATCHING STEP 4)...")
+                print("  Applying feature-type-specific normalization (MATCHING STEP 4)...")
                 
                 # MATCH STEP 4 EXACTLY: 7 scalar + 50 histogram
                 n_scalar = 7  # Only basic scalar features
                 n_histogram = 50  # 10 bins × 5 descriptors
                 
-                print(f"   📊 Feature split: {n_scalar} scalar + {n_histogram} histogram = {n_scalar + n_histogram} total")
+                print(f"     Feature split: {n_scalar} scalar + {n_histogram} histogram = {n_scalar + n_histogram} total")
                 
                 # Split features
                 scalar_features = self.X_features[:, :n_scalar]
@@ -121,7 +121,7 @@ class KNNEngine:
                 features_for_knn = self.X_features_normalized
             else:
                 # Use original features (already normalized from preparation)
-                print("📏 Using original normalized features from preparation")
+                print("  Using original normalized features from preparation")
                 features_for_knn = self.X_features
                 self.X_features_normalized = self.X_features  # Store reference
             
@@ -141,10 +141,10 @@ class KNNEngine:
             
             print(f"✅ KNN index built successfully!")
             print(f"   ⏱️  Build time: {build_time:.2f} seconds")
-            print(f"   📊 Index size: {len(features_for_knn)} shapes")
-            print(f"   🎯 Distance metric: {metric}")
-            print(f"   🔧 Algorithm: {algorithm}")
-            print(f"   📏 Normalization: {'Step 4 z-score' if use_step4_normalization else 'Original preparation'}")
+            print(f"     Index size: {len(features_for_knn)} shapes")
+            print(f"     Distance metric: {metric}")
+            print(f"     Algorithm: {algorithm}")
+            print(f"     Normalization: {'Step 4 z-score' if use_step4_normalization else 'Original preparation'}")
             
             return True
             
@@ -156,7 +156,7 @@ class KNNEngine:
         """
         Perform K-nearest neighbors search - DEBUG VERSION
         """
-        # print(f"\n🔍 === KNN SEARCH DEBUG ===")
+        # print(f"\n  === KNN SEARCH DEBUG ===")
         # print(f"Query Index: {query_shape_index}")
         # print(f"Requested K: {k}")
         
@@ -187,7 +187,7 @@ class KNNEngine:
             # Convert to results DataFrame (already sorted by sklearn)
             results = self._create_results_dataframe(indices, distances, query_time)
             
-            # print(f"🔍 K-NN search completed: {k} neighbors in {query_time:.4f}s")
+            # print(f"  K-NN search completed: {k} neighbors in {query_time:.4f}s")
             # print(f"=== END KNN SEARCH DEBUG ===\n")
             return results
             
@@ -199,7 +199,7 @@ class KNNEngine:
         """
         Perform range (radius) search - ENHANCED DEBUG VERSION
         """
-        print(f"\n🔍 === RANGE SEARCH DEBUG ===")
+        print(f"\n  === RANGE SEARCH DEBUG ===")
         print(f"Query Index: {query_shape_index}")
         print(f"Requested Radius: {radius}")
         print(f"Database Size: {len(self.X_features)}")
@@ -223,13 +223,13 @@ class KNNEngine:
             start_time = time.time()
             
             # CHECK WHICH METHOD IS BEING USED
-            print(f"\n🔧 Checking available methods:")
+            print(f"\n  Checking available methods:")
             print(f"   nn_model type: {type(self.nn_model)}")
             print(f"   Has radius_neighbors: {hasattr(self.nn_model, 'radius_neighbors')}")
             
             # Use radius_neighbors if available
             if hasattr(self.nn_model, 'radius_neighbors'):
-                print(f"🎯 Using radius_neighbors method")
+                print(f"  Using radius_neighbors method")
                 try:
                     distances, indices = self.nn_model.radius_neighbors(query_vector, radius=radius)
                     distances = distances[0]
@@ -239,16 +239,16 @@ class KNNEngine:
                     method_used = "radius_neighbors"
                 except Exception as e:
                     print(f"❌ radius_neighbors FAILED: {e}")
-                    print(f"🔄 Falling back to KNN method...")
+                    print(f"  Falling back to KNN method...")
                     # Fall through to KNN method
                     method_used = "knn_fallback"
             else:
-                print(f"🔄 radius_neighbors not available, using KNN fallback")
+                print(f"  radius_neighbors not available, using KNN fallback")
                 method_used = "knn_fallback"
             
             # KNN Fallback method (if radius_neighbors failed or unavailable)
             if method_used == "knn_fallback" or 'distances' not in locals():
-                print(f"\n🔧 Using KNN fallback method:")
+                print(f"\n  Using KNN fallback method:")
                 
                 # INCREASE the fallback limit significantly
                 max_neighbors = min(1000, len(self.X_features))  # Increased from 100 to 1000
@@ -275,14 +275,14 @@ class KNNEngine:
             
             query_time = time.time() - start_time
             
-            print(f"\n📊 FINAL RESULTS:")
+            print(f"\n  FINAL RESULTS:")
             print(f"   Method used: {method_used}")
             print(f"   Results found: {len(distances)}")
             print(f"   Query time: {query_time:.4f}s")
             
             # Sort by distance before creating DataFrame
             if len(distances) > 0:
-                print(f"🔧 Sorting {len(distances)} results...")
+                print(f"  Sorting {len(distances)} results...")
                 # Create pairs and sort by distance
                 distance_index_pairs = list(zip(distances, indices))
                 distance_index_pairs.sort(key=lambda x: x[0])  # Sort by distance
@@ -298,8 +298,8 @@ class KNNEngine:
             # Convert to results DataFrame
             results = self._create_results_dataframe(indices, distances, query_time)
             
-            print(f"📋 Created DataFrame with {len(results)} rows")
-            print(f"🔍 Range search completed: {len(results)} neighbors within radius {radius} in {query_time:.4f}s")
+            print(f"  Created DataFrame with {len(results)} rows")
+            print(f"  Range search completed: {len(results)} neighbors within radius {radius} in {query_time:.4f}s")
             print(f"=== END RANGE SEARCH DEBUG ===\n")
             
             return results
@@ -334,7 +334,7 @@ class KNNEngine:
             print(f"❌ Shape '{filename}' not found in database")
             return None
         
-        print(f"🎯 Query shape: {filename} (index: {query_index})")
+        print(f"  Query shape: {filename} (index: {query_index})")
         
         if search_type == 'knn':
             return self.query_knn(query_index, k)
@@ -409,7 +409,7 @@ class KNNEngine:
             print("❌ KNN index not built. Please call build_index() first")
             return None
         
-        print(f"🔬 Evaluating KNN performance with {n_test_queries} test queries...")
+        print(f"  Evaluating KNN performance with {n_test_queries} test queries...")
         
         # Random test indices
         test_indices = np.random.choice(len(self.X_features), size=n_test_queries, replace=False)
@@ -463,7 +463,7 @@ class KNNEngine:
         if stats is None:
             return
         
-        print(f"\n📊 KNN ENGINE STATISTICS")
+        print(f"\n  KNN ENGINE STATISTICS")
         print("=" * 50)
         print(f"Database size: {stats['database_size']} shapes")
         print(f"Feature dimensions: {stats['feature_dimensions']}")
@@ -473,13 +473,13 @@ class KNNEngine:
         print(f"Feature std: {stats['feature_range']['std']:.3f}")
         
         if stats['model_params']:
-            print(f"\n🔧 MODEL PARAMETERS")
+            print(f"\n  MODEL PARAMETERS")
             for param, value in stats['model_params'].items():
                 print(f"  {param}: {value}")
 
 def main():
     """Main function to test KNN engine"""
-    print("🚀 Starting KNN Engine Testing...")
+    print("  Starting KNN Engine Testing...")
     
     # Initialize KNN engine
     knn = KNNEngine()
@@ -495,7 +495,7 @@ def main():
         return
     
     # Step 3: Test KNN search
-    print(f"\n🔍 Testing KNN search...")
+    print(f"\n  Testing KNN search...")
     test_index = 0  # First shape in database
     results = knn.query_knn(test_index, k=10)
     
@@ -504,7 +504,7 @@ def main():
         print(results[['rank', 'filename', 'category', 'distance']].head().to_string(index=False))
     
     # Step 4: Test range search
-    print(f"\n🎯 Testing range search...")
+    print(f"\n  Testing range search...")
     range_results = knn.query_range(test_index, radius=2.0)
     
     if range_results is not None:
@@ -512,7 +512,7 @@ def main():
         print(range_results[['filename', 'category', 'distance']].head().to_string(index=False))
     
     # Step 5: Test filename query
-    print(f"\n📁 Testing filename query...")
+    print(f"\n  Testing filename query...")
     filename = knn.metadata[5]['filename']  # Test with 6th shape
     filename_results = knn.query_by_filename(filename, k=5)
     

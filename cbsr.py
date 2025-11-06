@@ -60,7 +60,7 @@ def load_raw_features(path: str, expected_features: Optional[int] = None) -> Tup
     if not path.exists():
         raise FileNotFoundError(f"Feature file not found: {path}")
     
-    print(f"📂 Loading features from: {path}")
+    print(f"  Loading features from: {path}")
     
     # Determine file format and load accordingly
     if path.suffix.lower() == '.csv':
@@ -82,7 +82,7 @@ def load_raw_features(path: str, expected_features: Optional[int] = None) -> Tup
             print(f"⚠️  Feature count mismatch: got {original_feature_count}, expected {expected_features}")
             
             if original_feature_count == 57 and expected_features == 45:
-                print("🔄 Auto-converting from 57-feature format to 45-feature format...")
+                print("  Auto-converting from 57-feature format to 45-feature format...")
                 features_raw = _convert_57_to_45_features(features_raw)
                 print(f"✅ Converted to {features_raw.shape[1]} features")
             else:
@@ -213,7 +213,7 @@ def _convert_57_to_45_features(features_57: np.ndarray) -> np.ndarray:
                       → A3(10), D1(10), D2(10), D3(10)
     """
     
-    print("   🔧 Converting feature format:")
+    print("     Converting feature format:")
     print("      57 features (7 scalar + 50 histogram) → 45 features (5 scalar + 40 histogram)")
     
     # Our current feature order:
@@ -389,7 +389,7 @@ class FeatureNormalizer:
             raise ValueError(f"Expected 45 features, got {features_raw.shape[1]}")
         
         if verbose:
-            print("🔧 Fitting FeatureNormalizer...")
+            print("  Fitting FeatureNormalizer...")
             print(f"   Database size: {features_raw.shape[0]} shapes × {features_raw.shape[1]} features")
         
         # =============================
@@ -410,7 +410,7 @@ class FeatureNormalizer:
             self.scalar_stds[zero_std_mask] = 1.0
         
         if verbose:
-            print("   📊 Scalar feature statistics:")
+            print("     Scalar feature statistics:")
             for i, name in enumerate(self.scalar_names):
                 print(f"      {name:15}: mean={self.scalar_means[i]:8.4f}, std={self.scalar_stds[i]:8.4f}")
         
@@ -420,7 +420,7 @@ class FeatureNormalizer:
         histogram_features = features_raw[:, 5:45]  # Features 5-44 (40 histogram features)
         
         if verbose:
-            print("   📈 Histogram feature validation:")
+            print("     Histogram feature validation:")
             for name, indices in self.histogram_indices.items():
                 # Adjust indices for histogram subset (subtract 5)
                 hist_indices = [i - 5 for i in indices]
@@ -479,7 +479,7 @@ class FeatureNormalizer:
         features_norm = np.zeros_like(features_raw, dtype=np.float32)
         
         if verbose:
-            print(f"🔄 Transforming {n_shapes} shape(s)...")
+            print(f"  Transforming {n_shapes} shape(s)...")
         
         # =============================
         # TRANSFORM SCALAR FEATURES
@@ -491,7 +491,7 @@ class FeatureNormalizer:
         features_norm[:, 0:5] = scalar_norm
         
         if verbose and n_shapes <= 5:  # Only show details for small batches
-            print("   📊 Scalar transformation:")
+            print("     Scalar transformation:")
             for i in range(n_shapes):
                 print(f"      Shape {i}: {scalar_features[i]} → {scalar_norm[i]}")
         
@@ -517,7 +517,7 @@ class FeatureNormalizer:
             
             if verbose and n_shapes <= 3:
                 zero_count = np.sum(~nonzero_mask)
-                print(f"   📈 {name} normalization: {zero_count} zero-sum histograms")
+                print(f"     {name} normalization: {zero_count} zero-sum histograms")
         
         # Return single vector if input was single vector
         if single_query:
@@ -704,7 +704,7 @@ def validate_feature_loading(path: str = "stats/features_database.csv"):
         path: Path to feature database for testing
     """
     
-    print("🧪 TESTING FEATURE LOADING FUNCTIONALITY")
+    print("  TESTING FEATURE LOADING FUNCTIONALITY")
     print("=" * 60)
     
     try:
@@ -761,7 +761,7 @@ def test_feature_normalizer(features_path: str = "stats/features_database.csv"):
         features_path: Path to feature database
     """
     
-    print("🧪 TESTING FEATURE NORMALIZER")
+    print("  TESTING FEATURE NORMALIZER")
     print("=" * 60)
     
     try:

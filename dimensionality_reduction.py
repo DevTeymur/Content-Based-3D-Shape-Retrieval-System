@@ -93,11 +93,11 @@ class DimensionalityReducer:
             return False
         
         try:
-            print(f"🔄 Computing t-SNE embedding...")
-            print(f"   📊 Input shape: {self.X_features.shape}")
-            print(f"   🎯 Target dimensions: {n_components}")
-            print(f"   🔧 Perplexity: {perplexity}")
-            print(f"   🔄 Iterations: {n_iter}")
+            print(f"  Computing t-SNE embedding...")
+            print(f"     Input shape: {self.X_features.shape}")
+            print(f"     Target dimensions: {n_components}")
+            print(f"     Perplexity: {perplexity}")
+            print(f"     Iterations: {n_iter}")
             
             start_time = time.time()
             
@@ -118,8 +118,8 @@ class DimensionalityReducer:
             
             print(f"✅ t-SNE computation completed!")
             print(f"   ⏱️  Computation time: {computation_time:.2f} seconds")
-            print(f"   📐 Output shape: {self.X_2d.shape}")
-            print(f"   📊 2D range: X[{self.X_2d[:, 0].min():.2f}, {self.X_2d[:, 0].max():.2f}], Y[{self.X_2d[:, 1].min():.2f}, {self.X_2d[:, 1].max():.2f}]")
+            print(f"     Output shape: {self.X_2d.shape}")
+            print(f"     2D range: X[{self.X_2d[:, 0].min():.2f}, {self.X_2d[:, 0].max():.2f}], Y[{self.X_2d[:, 1].min():.2f}, {self.X_2d[:, 1].max():.2f}]")
             
             return True
             
@@ -172,7 +172,7 @@ class DimensionalityReducer:
         # Convert to hex for consistency
         hex_colors = [mcolors.to_hex(color) for color in colors]
         
-        print(f"🎨 Generated {len(hex_colors)} distinguishable colors using ColorBrewer principles")
+        print(f"  Generated {len(hex_colors)} distinguishable colors using ColorBrewer principles")
         return hex_colors
     
     def create_interactive_plot(self, figsize=(12, 10), point_size=20, alpha=0.7):
@@ -189,7 +189,7 @@ class DimensionalityReducer:
             return False
         
         try:
-            print("🎨 Creating interactive scatterplot...")
+            print("  Creating interactive scatterplot...")
             
             # Create color mapping
             self._create_category_colors()
@@ -225,8 +225,8 @@ class DimensionalityReducer:
             self._setup_interactivity()
             
             print("✅ Interactive plot created successfully!")
-            print("   🖱️  Click on points to see shape details")
-            print("   🎯 Right-click to highlight similar shapes")
+            print("    ️  Click on points to see shape details")
+            print("     Right-click to highlight similar shapes")
             
             return True
             
@@ -301,11 +301,11 @@ class DimensionalityReducer:
             
             # Get the clicked shape's metadata
             clicked_meta = self.metadata[closest_index]
-            print(f"\n🖱️ Right-clicked: {clicked_meta['filename']} ({clicked_meta['category']})")
+            print(f"\n ️ Right-clicked: {clicked_meta['filename']} ({clicked_meta['category']})")
             
             # Query KNN engine for similar shapes
             if hasattr(self, 'knn_engine') and self.knn_engine is not None:
-                print(f"🔍 Finding 10 similar shapes...")
+                print(f"  Finding 10 similar shapes...")
                 results = self.knn_engine.query_knn(closest_index, k=10)
                 
                 # ✅ CORRECT: Pass results_df, not index and k
@@ -313,7 +313,7 @@ class DimensionalityReducer:
                 
                 # Print results
                 if results is not None and len(results) > 0:
-                    print(f"\n📊 Top 10 similar shapes:")
+                    print(f"\n  Top 10 similar shapes:")
                     for _, row in results.head(10).iterrows():
                         print(f"   {row['rank']}. {row['filename']} ({row['category']}) - dist: {row['distance']:.4f}")
             else:
@@ -419,7 +419,7 @@ class DimensionalityReducer:
             print("❌ Please compute t-SNE embedding first")
             return
         
-        print(f"\n📊 CLUSTER ANALYSIS")
+        print(f"\n  CLUSTER ANALYSIS")
         print("=" * 50)
         
         # Calculate intra-category distances
@@ -464,13 +464,13 @@ class DimensionalityReducer:
         from scipy.spatial.distance import pdist, squareform
         from scipy.stats import silhouette_score
         
-        print("\n🎨 t-SNE CLUSTERING QUALITY ANALYSIS")
+        print("\n  t-SNE CLUSTERING QUALITY ANALYSIS")
         print("=" * 60)
         
         # Compute silhouette score (measures cluster quality)
         try:
             silhouette_avg = silhouette_score(self.X_2d, self.labels)
-            print(f"📊 Overall Silhouette Score: {silhouette_avg:.3f}")
+            print(f"  Overall Silhouette Score: {silhouette_avg:.3f}")
             print(f"   (Range: -1 to 1, higher = better separated clusters)")
         except:
             print("⚠️  Could not compute silhouette score")
@@ -515,7 +515,7 @@ class DimensionalityReducer:
         sorted_analysis = sorted(category_analysis.items(), 
                              key=lambda x: x[1]['separation_ratio'], reverse=True)
         
-        print(f"\n🏆 BEST SEPARATED CATEGORIES (High Separation Ratio):")
+        print(f"\n  BEST SEPARATED CATEGORIES (High Separation Ratio):")
         print(f"{'Category':<20} {'Count':<6} {'Intra':<8} {'Inter':<8} {'Ratio':<8}")
         print("-" * 60)
         
@@ -524,7 +524,7 @@ class DimensionalityReducer:
                   f"{metrics['avg_intra_distance']:<8.3f} {metrics['avg_inter_distance']:<8.3f} "
                   f"{metrics['separation_ratio']:<8.2f}")
         
-        print(f"\n💔 CHALLENGING CATEGORIES (Low Separation Ratio):")
+        print(f"\n  CHALLENGING CATEGORIES (Low Separation Ratio):")
         print(f"{'Category':<20} {'Count':<6} {'Intra':<8} {'Inter':<8} {'Ratio':<8}")
         print("-" * 60)
         
@@ -533,7 +533,7 @@ class DimensionalityReducer:
                   f"{metrics['avg_intra_distance']:<8.3f} {metrics['avg_inter_distance']:<8.3f} "
                   f"{metrics['separation_ratio']:<8.2f}")
         
-        print(f"\n💡 INTERPRETATION GUIDE:")
+        print(f"\n  INTERPRETATION GUIDE:")
         print(f"• High separation ratio (>2.0): Dense, well-separated clusters")
         print(f"  → Query shapes from these categories should return same-class results")
         print(f"• Low separation ratio (<1.5): Overlapping or mixed regions") 
@@ -615,9 +615,9 @@ class DimensionalityReducer:
             
             # Add interpretation annotations
             fig.add_annotation(
-                text="💡 Dense same-color clusters = good intra-class similarity<br>" +
-                     "🔍 Mixed-color regions = classes hard to separate<br>" +
-                     "📊 Well-separated clusters = distinct categories",
+                text="  Dense same-color clusters = good intra-class similarity<br>" +
+                     "  Mixed-color regions = classes hard to separate<br>" +
+                     "  Well-separated clusters = distinct categories",
                 xref="paper", yref="paper",
                 x=0.02, y=0.98, xanchor='left', yanchor='top',
                 showarrow=False,
@@ -637,7 +637,7 @@ class DimensionalityReducer:
 
 def main():
     """Main function to test dimensionality reduction"""
-    print("🚀 Starting Dimensionality Reduction & Visualization...")
+    print("  Starting Dimensionality Reduction & Visualization...")
     
     # Initialize DR system
     dr = DimensionalityReducer()
@@ -668,7 +668,7 @@ def main():
     # Step 6: Show statistics
     stats = dr.get_statistics()
     if stats:
-        print(f"\n📊 EMBEDDING STATISTICS")
+        print(f"\n  EMBEDDING STATISTICS")
         print("=" * 50)
         print(f"Embedding shape: {stats['embedding_shape']}")
         print(f"Categories: {stats['n_categories']}")
@@ -676,7 +676,7 @@ def main():
         print(f"Y range: [{stats['embedding_range']['y_min']:.2f}, {stats['embedding_range']['y_max']:.2f}]")
     
     print("\n✅ Dimensionality reduction completed!")
-    print("🎨 Interactive plot created - use mouse to explore:")
+    print("  Interactive plot created - use mouse to explore:")
     print("   • Hover over points to see details")
     print("   • Right-click points to highlight similar shapes")
     
